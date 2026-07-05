@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weeko — Logo-Marken</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #fbf8f1; color: #141519; }
+  header { padding: 32px 24px 8px; }
+  h1 { font-size: 20px; font-weight: 500; margin: 0; }
+  p.sub { margin: 6px 0 0; color: #6d6759; font-size: 14px; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .pane { padding: 24px; }
+  .light { background: #fbf8f1; color: #141519; }
+  .dark { background: #141519; color: #f1ecdf; }
+  .mode-label { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; opacity: .55; margin: 0 0 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; }
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px 8px; border-radius: 14px; }
+  .light .cell { background: #ffffff; }
+  .dark .cell { background: #1e2027; }
+  .cell svg { width: 60px; height: 60px; }
+  .name { font-size: 12px; opacity: .7; text-align: center; }
+  .wm { margin-top: 20px; }
+  .wm svg { width: 220px; height: auto; }
+  @media (max-width: 640px) { .modes { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Weeko — Logo-Marken</h1>
+  <p class="sub">Minimalistisch, monochrom + ein blauer Akzent (#3d7fd6). currentColor = automatisch Light/Dark.</p>
+</header>
+<div class="modes" id="modes"></div>
+<script>
+  const icons = ["outline-icon","monoline-w","timeline","focus","sunrise","calendar","seven-days","loop","agenda","progress"];
+  const names = {"outline-icon":"Outline (primär)","monoline-w":"Monoline W","timeline":"Timeline","focus":"Fokus","sunrise":"Sunrise","calendar":"Kalender","seven-days":"7 Tage","loop":"Loop","agenda":"Agenda","progress":"Fortschritt"};
+  const modes = document.getElementById("modes");
+  async function load(name){ const r = await fetch(name + ".svg"); return r.text(); }
+  (async () => {
+    const svgs = {};
+    for (const n of icons) svgs[n] = await load(n);
+    const wordmark = await load("wordmark");
+    for (const mode of ["light","dark"]) {
+      const pane = document.createElement("div");
+      pane.className = "pane " + mode;
+      pane.innerHTML = '<p class="mode-label">' + mode + '</p><div class="grid"></div><div class="wm"></div>';
+      const grid = pane.querySelector(".grid");
+      for (const n of icons) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.innerHTML = svgs[n] + '<span class="name">' + names[n] + '</span>';
+        grid.appendChild(cell);
+      }
+      pane.querySelector(".wm").innerHTML = wordmark;
+      modes.appendChild(pane);
+    }
+  })();
+</script>
+</body>
+</html>

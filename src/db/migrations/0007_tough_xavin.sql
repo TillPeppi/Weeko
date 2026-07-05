@@ -1,0 +1,1 @@
+ALTER TABLE `set_log` ADD `superset_group` integer;

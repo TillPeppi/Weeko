@@ -1,0 +1,668 @@
+{
+  "common": {
+    "appName": "Weeko",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "done": "Done",
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "confirm": "Confirm",
+    "add": "Add",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "today": "Today",
+    "loading": "Loading …",
+    "none": "None",
+    "optional": "optional",
+    "minutes": "minutes",
+    "minutesShort": "min",
+    "from": "From",
+    "to": "To",
+    "kg": "kg",
+    "error": "Error",
+    "retry": "Retry"
+  },
+  "tabs": {
+    "week": "Week",
+    "today": "Today",
+    "training": "Training",
+    "food": "Nutrition",
+    "tasks": "Tasks",
+    "settings": "Settings"
+  },
+  "blockTypes": {
+    "work": "Work",
+    "handball": "Handball",
+    "training": "Training",
+    "dog": "Dog",
+    "meal": "Meal",
+    "hobby": "Hobby",
+    "task": "Task",
+    "free": "Free"
+  },
+  "blockStatus": {
+    "planned": "Planned",
+    "active": "Active",
+    "done": "Done",
+    "skipped": "Skipped"
+  },
+  "weekdays": {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday"
+  },
+  "weekdaysShort": {
+    "1": "Mon",
+    "2": "Tue",
+    "3": "Wed",
+    "4": "Thu",
+    "5": "Fri",
+    "6": "Sat",
+    "7": "Sun"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to Weeko",
+      "subtitle": "Your week is planned externally — Weeko guides you through it: timeline, tasks, training, reminders.",
+      "start": "Let's go",
+      "skipAll": "Skip setup"
+    },
+    "structure": {
+      "title": "Your weekly structure",
+      "subtitle": "Work hours, work location and fixed blocks — all editable later.",
+      "workTime": "Work hours",
+      "workStart": "Work starts",
+      "workEnd": "Work ends",
+      "workLocation": "Work location",
+      "office": "Office",
+      "home": "Home office",
+      "noWork": "No work day",
+      "doneBy": "Day usually done by",
+      "fixedBlocks": "Fixed blocks",
+      "noFixedBlocks": "No fixed blocks"
+    },
+    "profile": {
+      "title": "Body profile",
+      "subtitle": "Phase 1 only stores these values — calorie math comes later.",
+      "height": "Height (cm)",
+      "age": "Age",
+      "sex": "Sex",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other",
+      "weight": "Weight (kg)",
+      "goal": "Goal",
+      "leanGain": "Lean gain (+0.25–0.5 kg/week)"
+    },
+    "equipment": {
+      "title": "Equipment & exercises",
+      "subtitle": "We derive an exercise list from your equipment — fully editable.",
+      "equipmentTitle": "Equipment",
+      "exercisesTitle": "Exercises",
+      "weighted": "Weighted"
+    },
+    "preferences": {
+      "title": "Language & theme",
+      "subtitle": "How should Weeko look and speak?"
+    },
+    "finish": {
+      "title": "All set!",
+      "subtitle": "Import your AI-planned week as JSON on Sunday — or look around first.",
+      "cta": "Start Weeko"
+    }
+  },
+  "week": {
+    "title": "Week",
+    "weekLabel": "Week {{week}}",
+    "weekOfYear": "Week {{week}} / {{year}}",
+    "empty": {
+      "title": "No week planned yet",
+      "subtitle": "Import your AI's JSON plan or create a week from a template.",
+      "importCta": "Import week",
+      "templateCta": "Create from template"
+    },
+    "saveAsTemplate": "Save as template",
+    "templateName": "Template name",
+    "templateSaved": "Template saved",
+    "import": {
+      "title": "Week import",
+      "subtitle": "Paste JSON or pick a file — Weeko validates and shows a preview.",
+      "pasteLabel": "Paste JSON",
+      "pastePlaceholder": "{ \"schemaVersion\": 1, … }",
+      "pickFile": "Pick file",
+      "validate": "Validate & preview",
+      "errorsTitle": "The import contains errors",
+      "warningsTitle": "Rule engine hints",
+      "warningsSubtitle": "Warnings don't block the import — you decide.",
+      "atDayBlock": "Day {{day}}, block {{block}}",
+      "atDay": "Day {{day}}",
+      "atTask": "Task {{task}}",
+      "errors": {
+        "invalidJson": "This is not valid JSON.",
+        "invalidTime": "Invalid time (expected HH:mm).",
+        "invalidDate": "Invalid date (expected YYYY-MM-DD).",
+        "invalidBlockType": "Unknown block type.",
+        "missingTitle": "Title is missing.",
+        "missingCategory": "Category is missing.",
+        "invalidEstimatedMinutes": "Invalid duration estimate.",
+        "unsupportedVersion": "Unsupported schema version (expected 1).",
+        "invalidYear": "Invalid year.",
+        "invalidIsoWeek": "Invalid ISO week (1–53).",
+        "noDays": "The week contains no days.",
+        "tooManyDays": "More than 7 days given.",
+        "duplicateDate": "Duplicate date.",
+        "dateOutsideWeek": "Date is outside the declared ISO week.",
+        "endBeforeStart": "endTime is before startTime.",
+        "outsideDayBounds": "Block is outside 05:00–24:00.",
+        "missingOrWrongType": "Field is missing or has the wrong type.",
+        "invalidValue": "Invalid value.",
+        "unknownField": "Unknown field.",
+        "generic": "Invalid input."
+      },
+      "warnings": {
+        "bigTrainingBeforeHandballDay": "“{{title}}” on {{date}}: big own training the day before a handball day.",
+        "trainingOnRegenerationDay": "“{{title}}” on {{date}}: Wednesday & Sunday are regeneration anchors — no intense training.",
+        "bigTrainingBeforeSameDayHandball": "“{{title}}” on {{date}}: big session with handball later the same day.",
+        "overlappingBlocks": "{{date}}: “{{titleA}}” and “{{titleB}}” overlap."
+      },
+      "preview": {
+        "title": "Preview",
+        "subtitle": "Tap blocks to edit. Applying replaces the target week.",
+        "apply": "Apply week",
+        "applied": "Week applied",
+        "replaceTitle": "Replace week?",
+        "replaceMessage": "Week {{week}}/{{year}} already exists. The import replaces all blocks and week tasks.",
+        "editBlock": "Edit block",
+        "deleteBlock": "Delete block",
+        "blockTitle": "Title",
+        "blockType": "Type",
+        "blockStart": "Start",
+        "blockEnd": "End"
+      },
+      "templates": {
+        "title": "Week templates",
+        "createFrom": "Create week from template",
+        "empty": "No templates saved yet.",
+        "targetWeek": "Target week"
+      }
+    },
+    "balance": {
+      "title": "Week balance",
+      "done": "done",
+      "skipped": "skipped",
+      "open": "open"
+    }
+  },
+  "today": {
+    "title": "Today",
+    "now": "Now",
+    "next": "Up next",
+    "nothingPlanned": "Nothing (more) planned today.",
+    "noWeek": "Nothing imported for this week yet.",
+    "openTasks": "Open tasks",
+    "noOpenTasks": "All done 🎉",
+    "startTraining": "Start training",
+    "trainingActive": "Training in progress",
+    "continueTraining": "Continue training",
+    "untilTime": "until {{time}}",
+    "remainingHm": "{{h}} h {{mm}} min left",
+    "remainingM": "{{m}} min left",
+    "setProgress": "Set {{current}}/{{total}}",
+    "clock": "Clock"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "new": "New task",
+    "edit": "Edit task",
+    "taskTitle": "Title",
+    "category": "Category",
+    "estimatedMinutes": "Estimated duration (min)",
+    "recurrence": "Recurrence",
+    "recurrenceNone": "One-off",
+    "recurrenceDaily": "Daily",
+    "recurrenceWeekly": "Weekly",
+    "window": "Time window",
+    "windowDay": "Day",
+    "open": "Open",
+    "completed": "Completed",
+    "empty": "No tasks — import a week or create one.",
+    "fromWeekPlan": "From week plan",
+    "categories": {
+      "mealprep": "Meal prep",
+      "errands": "Errands & shopping",
+      "guitar": "Guitar",
+      "household": "Household",
+      "other": "Other"
+    }
+  },
+  "food": {
+    "title": "Nutrition",
+    "today": "Today",
+    "totals": "Daily balance",
+    "min": "min.",
+    "max": "max.",
+    "addEntry": "Add",
+    "mealEmpty": "Nothing logged yet.",
+    "proteinShort": "protein",
+    "meals": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snacks"
+    },
+    "nutrients": {
+      "kcal": "Calories",
+      "fat": "Fat",
+      "saturatedFat": "of which saturated",
+      "carbs": "Carbohydrates",
+      "sugars": "Sugar",
+      "fiber": "Fiber",
+      "protein": "Protein",
+      "salt": "Salt"
+    },
+    "micros": {
+      "title": "Vitamins & minerals",
+      "hint": "Percent of the daily reference intake (EU NRV). Not every product reports micronutrients – treat these as a lower bound.",
+      "vitaminA": "Vitamin A",
+      "vitaminC": "Vitamin C",
+      "vitaminD": "Vitamin D",
+      "vitaminE": "Vitamin E",
+      "vitaminB12": "Vitamin B12",
+      "folate": "Folate",
+      "calcium": "Calcium",
+      "iron": "Iron",
+      "magnesium": "Magnesium",
+      "potassium": "Potassium",
+      "zinc": "Zinc",
+      "iodine": "Iodine"
+    },
+    "add": {
+      "title": "Add food",
+      "scan": "Scan",
+      "searchTab": "Search",
+      "custom": "Custom entry",
+      "barcodeManual": "Enter barcode",
+      "lookup": "Look up",
+      "searchLabel": "Product search",
+      "searchPlaceholder": "e.g. skyr, oats …",
+      "searchButton": "Search",
+      "noResults": "No results. Tip: scan the barcode – Lidl/Aldi products are almost always covered by barcode.",
+      "notFound": "Product not found. You can add it as a custom entry.",
+      "networkError": "Open Food Facts is not reachable right now.",
+      "amount": "Amount (g/ml)",
+      "serving": "Serving",
+      "package": "Package",
+      "per100": "Per 100 g",
+      "meal": "Meal",
+      "save": "Log it",
+      "customName": "Name",
+      "customHint": "Values are per 100 g — the amount determines what is counted. With a barcode the product becomes scannable later.",
+      "recent": "Recently used",
+      "cameraPermission": "Camera access is required to scan barcodes.",
+      "grantPermission": "Allow access",
+      "scannerWebUnsupported": "This browser does not support camera scanning – just type the barcode instead.",
+      "attribution": "Product data: Open Food Facts (openfoodfacts.org, ODbL)",
+      "favorites": "Favorites",
+      "barcodeOptional": "Barcode (optional)",
+      "basicFoods": "Basic foods",
+      "withMicros": "incl. vitamins & minerals"
+    },
+    "trend": {
+      "title": "Week trend",
+      "avg": "Ø {{kcal}} kcal/day"
+    },
+    "activityBonus": "{{base}} base target + {{kcal}} kcal activity (Apple Health)",
+    "supplements": {
+      "title": "Nutrient check",
+      "intro": "Below 50% of the daily reference on average over the last {{days}} tracked days:",
+      "sources": {
+        "vitaminA": "Good sources: carrots, sweet potato, spinach, eggs",
+        "vitaminC": "Good sources: bell pepper, broccoli, kiwi, citrus fruit",
+        "vitaminD": "Hard to cover through food — mainly sunlight; some in fatty fish and eggs",
+        "vitaminE": "Good sources: almonds, olive oil, peanut butter",
+        "vitaminB12": "Good sources: fish, meat, dairy, eggs (a supplement is required on a vegan diet)",
+        "folate": "Good sources: spinach, lentils, chickpeas, broccoli",
+        "calcium": "Good sources: dairy, cheese, tofu, almonds",
+        "iron": "Good sources: oats, lentils, beef, spinach",
+        "magnesium": "Good sources: nuts, oats, whole grains, flaxseed",
+        "potassium": "Good sources: potatoes, bananas, avocado, legumes",
+        "zinc": "Good sources: beef, cheese, oats, nuts",
+        "iodine": "Good sources: sea fish, milk, iodized salt"
+      },
+      "supplementNote": "If a value stays low for weeks despite a varied diet, a supplement can make sense — when in doubt, clarify the dosage with a doctor.",
+      "dataNote": "Products without micronutrient labels don't count here — basic foods from the search are fully covered.",
+      "disclaimer": "Not medical advice."
+    }
+  },
+  "training": {
+    "title": "Training",
+    "active": "Active session",
+    "start": "Start session",
+    "adhoc": "Free session",
+    "fromTemplate": "From template",
+    "templates": "Templates",
+    "exercises": "Exercises",
+    "exercise": "Exercise",
+    "addExercise": "Add exercise",
+    "sets": "Sets",
+    "set": "Set {{index}}",
+    "reps": "Reps",
+    "weight": "Weight (kg)",
+    "addSet": "Add set",
+    "lastTime": "Last time: {{summary}}",
+    "lastTimeSet": "{{sets}}×{{reps}} @ {{weight}} kg",
+    "lastTimeSetNoWeight": "{{sets}}×{{reps}}",
+    "noLastTime": "First session with this exercise",
+    "finish": "Finish session",
+    "abort": "Abort",
+    "abortConfirm": "Really abort the session? Logged sets stay saved.",
+    "history": "History",
+    "historyEmpty": "No sessions yet.",
+    "sessionDone": "Session saved 💪",
+    "duration": "{{minutes}} min",
+    "startedAt": "Started {{time}}",
+    "rest": "Rest",
+    "restPlus30": "+30 s",
+    "volume": "Σ {{kg}} kg",
+    "superset": "Superset",
+    "supersetLabel": "Superset {{letter}}",
+    "linkSuperset": "Superset with next exercise",
+    "unlinkSuperset": "Break up superset",
+    "searchExercise": "Search exercise …",
+    "searchNoResults": "No exercise found — add it in the settings below.",
+    "emptySessionTitle": "Build your session",
+    "emptySessionBody": "Pick your first exercise — sets and weights are prefilled from last time.",
+    "lastUsed": "Last: {{summary}}",
+    "neverTrained": "Never trained",
+    "muscleGroups": {
+      "pull": "Pull",
+      "push": "Push",
+      "legs": "Legs",
+      "core": "Core",
+      "cardio": "Cardio",
+      "fullBody": "Full body",
+      "other": "Custom exercises"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "week": "This week",
+      "month": "This month",
+      "year": "This year",
+      "legend": "{{count}} training days this year — every glowing dot is one day"
+    }
+  },
+  "stats": {
+    "title": "Statistics",
+    "subtitle": "Trends and records from your data — training, nutrition, week plan and health.",
+    "weekShort": "W{{week}}",
+    "training": {
+      "empty": "No finished sessions yet — complete a workout to see statistics.",
+      "currentStreak": "Current streak",
+      "longestStreak": "Longest streak",
+      "weeksUnit": "weeks",
+      "avgDuration": "Avg. duration",
+      "volumeTitle": "Weekly volume",
+      "volumeLegend": "Σ reps × kg per week (last 8 weeks) · avg {{sessions}} sessions/week",
+      "monthlyVolumeTitle": "Monthly volume",
+      "monthlyVolumeLegend": "Σ reps × kg per month (last 12) · avg {{sessions}} sessions/month",
+      "progressionTitle": "Progression per exercise",
+      "newPr": "New record! 🎉",
+      "progressionEmpty": "No logged sets for this exercise yet.",
+      "prMaxWeight": "Max. weight",
+      "prE1rm": "Best 1RM (est.)",
+      "prVolume": "Best volume",
+      "prReps": "Most reps",
+      "chartMaxWeight": "Heaviest set per session (kg)",
+      "chartMaxReps": "Most reps per session",
+      "chartLegend": "Green bars mark a new record.",
+      "weightGainTitle": "kg gain per exercise",
+      "weightGainHint": "Average weight gain from 2nd session onwards (new exercises count from the 2nd time).",
+      "weightGainEmpty": "No progression yet — train each exercise at least 2× for comparison.",
+      "weightGainSessions": "{{count}}× trained",
+      "weightGainGain": "{{gain}} kg gain"
+    },
+    "food": {
+      "empty": "No entries yet — log meals to see statistics.",
+      "surplus": "surplus",
+      "deficit": "deficit",
+      "balanceTitle": "Calorie balance (this week)",
+      "balanceEmpty": "Nothing logged this week yet.",
+      "balanceEstimate": "≈ {{kg}} kg (7700 kcal ≈ 1 kg)",
+      "balanceDays": "over {{count}} tracked days · target {{target}} kcal/day",
+      "kcalWeeklyTitle": "Calories per week (avg/day)",
+      "kcalWeeklyLegend": "Avg kcal per tracked day (last 4 weeks) · target {{target}} kcal",
+      "proteinWeekRow": "Protein W{{week}} · {{days}} days",
+      "proteinLegend": "Avg protein per tracked day vs. the daily target.",
+      "mealSplitTitle": "Distribution by meal",
+      "topFoodsTitle": "Most logged foods",
+      "topFoodMeta": "{{count}}× · {{kcal}} kcal",
+      "microTrendTitle": "Micronutrient trend",
+      "microTrendHint": "Avg % of daily need per tracked day, oldest to newest week (only values with data).",
+      "qualityTitle": "Food quality (last week)",
+      "qualityEmpty": "Not enough entries yet for a quality overview.",
+      "proteinSourcesTitle": "Protein sources",
+      "meatPercent": "Meat",
+      "fishPercent": "Fish",
+      "plantPercent": "Plant",
+      "dairyPercent": "Dairy",
+      "fiberTitle": "Fiber",
+      "fiberGrams": "avg {{grams}} g/day",
+      "fiberPerKcal": "{{ratio}} g/100 kcal",
+      "vegetableTitle": "Vegetable share"
+    },
+    "plan": {
+      "empty": "No week planned and no tasks yet — import a week to see statistics.",
+      "adherenceTitle": "Plan adherence per week",
+      "adherenceLegend": "Share of completed blocks per week (last 8 weeks).",
+      "timeBudgetTitle": "Time budget W{{week}}",
+      "timeBudgetValue": "{{done}} / {{planned}} h",
+      "timeBudgetLegend": "Done vs. planned hours per block type (latest week).",
+      "skipTitle": "Often skipped",
+      "skipValue": "{{skipped}}/{{total}} · {{percent}} %",
+      "weekdayTitle": "Skipped by weekday",
+      "weekdayLegend": "Share of skipped blocks per weekday (all loaded weeks).",
+      "tasksTitle": "Tasks per category",
+      "tasksValue": "{{done}}/{{total}}"
+    },
+    "health": {
+      "tab": "Health",
+      "noData": "No health data found for the last 7 days.",
+      "avgSleep": "Avg. sleep",
+      "avgSteps": "Avg. steps",
+      "avgRestingHr": "Avg. resting HR",
+      "avgHrv": "Avg. HRV",
+      "daysWithData": "Avg over {{count}} of {{total}} days with data",
+      "sleepTitle": "Sleep per night",
+      "sleepLegend": "Sleep duration per night since {{from}}.",
+      "readinessTitle": "Recovery over time",
+      "avgReadiness": "avg",
+      "readinessLegend": "Readiness score per day (from HRV, sleep, resting HR; color-coded by level).",
+      "hrvTitle": "HRV over time",
+      "hrvLegend": "Heart-rate variability (SDNN, ms) per day.",
+      "weightTitle": "Body weight (30 days)",
+      "weightLegend": "Weight trend over the last 30 days with % change.",
+      "weightEmpty": "No measurements yet — start weight tracking in the Health tab.",
+      "current": "Current",
+      "avgWeight30d": "Avg 30 days",
+      "change30d": "30-day trend",
+      "fatPercent": "Body fat"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": {
+      "title": "Language",
+      "de": "German",
+      "en": "English"
+    },
+    "theme": {
+      "title": "Theme",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Per category: on/off, quiet hours and escalation interval.",
+      "enabled": "Enabled",
+      "quietHours": "Quiet hours",
+      "quietFrom": "Never after",
+      "quietTo": "Never before",
+      "escalation": "Remind every",
+      "digestTime": "Time",
+      "snooze": "Snooze",
+      "digestPresets": {
+        "morning": "Morning",
+        "noon": "Noon",
+        "evening": "Evening"
+      },
+      "webUnsupported": "Local notifications are not available in the browser — use the iOS/Android app.",
+      "permissionDenied": "Notifications are disabled at the system level.",
+      "categories": {
+        "blockStart": "Block start",
+        "coach": "Coach (morning tip)"
+      }
+    },
+    "profile": "Profile & weekly structure",
+    "profileSection": "Body profile",
+    "structureSection": "Weekly structure",
+    "exercisesSection": "Equipment & exercises",
+    "data": {
+      "title": "Data",
+      "export": "Export data (JSON)",
+      "exportDone": "Export created",
+      "deleteAll": "Delete all data",
+      "deleteConfirmTitle": "Really delete everything?",
+      "deleteConfirmMessage": "All weeks, tasks, workouts and settings will be permanently deleted.",
+      "deleted": "All data deleted"
+    },
+    "rerunOnboarding": "Run setup again",
+    "about": "Weeko — local, offline, your data stays on your device.",
+    "nutrition": {
+      "title": "Nutrition goals",
+      "hint": "Empty fields are derived from your profile automatically.",
+      "kcal": "Calories (kcal)",
+      "protein": "Protein min. (g)",
+      "fiber": "Fiber min. (g)",
+      "sugars": "Sugar max. (g)",
+      "salt": "Salt max. (g)"
+    }
+  },
+  "notifications": {
+    "blockStart": {
+      "title": "{{title}}",
+      "body": "Starting now ({{start}}–{{end}})"
+    },
+    "taskReminder": {
+      "title": "Task: {{title}}",
+      "body": "Planned for {{time}}"
+    },
+    "taskEscalation": {
+      "title": "Still open: {{title}}",
+      "body": "Complete it or mute it in settings."
+    },
+    "coach": {
+      "title": "Your coach for today"
+    }
+  },
+  "seeds": {
+    "blocks": {
+      "handball": "Handball practice",
+      "dogEvening": "Dog walk",
+      "dogLunch": "Dog lunch walk",
+      "trading": "Trading evening"
+    },
+    "equipment": {
+      "pullupBar": "Pull-up bar",
+      "dipBars": "Dip bars",
+      "heavyKettlebell": "Kettlebell (heavy, >16 kg)",
+      "treadmill": "Treadmill"
+    },
+    "exercises": {
+      "pullup": "Pull-up",
+      "chinup": "Chin-up",
+      "dip": "Dip",
+      "pushup": "Push-up",
+      "pikePushup": "Pike push-up",
+      "kbSwing": "Kettlebell swing",
+      "gobletSquat": "Goblet squat",
+      "kbLunge": "KB lunge",
+      "farmersCarry": "Farmer's carry",
+      "treadmillRun": "Treadmill interval",
+      "burpee": "Burpee",
+      "plank": "Plank",
+      "kbRow": "KB single-arm row",
+      "kbPress": "KB overhead press",
+      "kbDeadlift": "KB deadlift",
+      "diamondPushup": "Diamond push-up",
+      "bulgarianSplitSquat": "Bulgarian split squat",
+      "pistolSquat": "Pistol squat",
+      "gluteBridge": "Glute bridge",
+      "calfRaise": "Calf raise",
+      "wallSit": "Wall sit",
+      "sidePlank": "Side plank",
+      "hollowHold": "Hollow body hold",
+      "hangingLegRaise": "Hanging leg raise",
+      "russianTwist": "Russian twist",
+      "mountainClimber": "Mountain climbers",
+      "jumpSquat": "Jump squat"
+    },
+    "sessionTemplates": {
+      "hyrox": "Hyrox session",
+      "weightedCalisthenics": "Weighted calisthenics",
+      "upperShort": "Upper body short (20–30 min)"
+    }
+  },
+  "health": {
+    "title": "Sleep & health",
+    "webUnsupported": "Apple Health data (sleep, activity) is only available in the iOS app.",
+    "connect": "Connect Apple Health",
+    "connectHint": "Shows sleep (Apple Watch / Helio ring) and daily activity from Apple Health.",
+    "noData": "No health data found for today. Check read access in the Health app (profile → data access → Weeko).",
+    "stages": {
+      "deep": "Deep",
+      "core": "Core",
+      "rem": "REM",
+      "awake": "Awake"
+    },
+    "inBed": "{{from}}–{{to}}",
+    "steps": "steps",
+    "activeKcal": "activity",
+    "restingHr": "resting HR",
+    "hrv": "HRV",
+    "readiness": {
+      "title": "Recovery",
+      "bands": {
+        "low": "low",
+        "moderate": "moderate",
+        "high": "high"
+      }
+    }
+  },
+  "coach": {
+    "title": "Coach",
+    "dismiss": "Dismiss",
+    "insights": {
+      "lowReadinessIntense": "Your recovery is low today ({{score}}/100). Consider whether “{{title}}” really has to happen today.",
+      "lowProteinTrend": "Your protein averaged {{avg}} g/day this week — the target is {{target}} g. Plan a little more protein.",
+      "trainingConsistency": "Nice: {{days}} training days in the last 7 days. Keep it up!",
+      "regenerationDayIntense": "Today is a recovery day — “{{title}}” is an intense session. Better to go easy or reschedule.",
+      "highTrainingStreak": "{{days}} training days in a row. Take a rest day so you can recover.",
+      "progressionStalled": "No new best on {{exercise}} for {{sessions}} sessions (last {{weight}} kg) — bump the weight or reps."
+    }
+  },
+  "body": {
+    "title": "Body level",
+    "strain": "strain",
+    "sleepNeed": "sleep need",
+    "disclaimer": "Estimated from sleep & heart rate — not medical advice."
+  }
+}

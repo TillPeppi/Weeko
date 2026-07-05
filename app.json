@@ -7,17 +7,17 @@
     "icon": "./assets/images/icon.png",
     "scheme": "weeko",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F4F1E9",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -28,15 +28,44 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#F4F1E9",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 200
         }
-      ]
+      ],
+      "expo-sqlite",
+      "expo-localization",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Weeko nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen."
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Weeko liest Schlaf- und Aktivitätsdaten (Apple Watch, Helio Ring via Apple Health), um sie in deiner Tagesübersicht anzuzeigen.",
+          "background": false
+        }
+      ],
+      "./plugins/withNoPushEntitlement"
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": false
+    },
+    "ios": {
+      "bundleIdentifier": "com.tillpeppi.Weeko",
+      "appleTeamId": "BW54MR7M6G",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "50f8619a-751b-4d17-9c64-d442c176ce03"
+      }
     }
   }
 }

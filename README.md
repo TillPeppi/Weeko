@@ -1,56 +1,34 @@
-# Welcome to your Expo app 👋
+# Weeko
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Persönliche Wochenplanungs- & Life-OS-App — **eine Codebase für iOS, Android und Web**
+(Expo + React Native + TypeScript).
 
-## Get started
+Kernidee: Am Sonntag plant eine externe KI die Woche und liefert sie als JSON.
+Weeko importiert, validiert (Zod + Regel-Engine), zeigt die Woche als Zeitstrahl
+und führt durch den Alltag: Aufgaben abhaken, Training tracken, erinnern.
+Phase 1 ist 100 % lokal — kein Backend, keine Cloud, kein Account.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Loslegen
 
 ```bash
-npm run reset-project
+npm install        # wendet auch patches/ an (postinstall)
+npm run web        # Web-Dev-Server
+npm run ios        # iOS-Simulator
+npm test           # Domain-/Schema-Tests (Vitest)
+npm run typecheck  # TypeScript strict
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Dokumentation
 
-### Other setup steps
+| Dokument | Inhalt |
+|---|---|
+| [REQUIREMENTS.md](REQUIREMENTS.md) | Produkt-Brief: Vision, Stack, Arbeitsregeln, Phase-1-Scope |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Struktur, Datenfluss, Architektur-Entscheidungen |
+| [docs/WEEK_SCHEMA.md](docs/WEEK_SCHEMA.md) | JSON-Import-Schema für die Planungs-KI (generiert) |
+| [docs/PROGRESS.md](docs/PROGRESS.md) | Stand, Verifikation, offene TODOs |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Stack
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Expo SDK 57 · Expo Router · expo-sqlite + Drizzle ORM (SQLite = Single Source of Truth,
+auf Web via wa-sqlite/OPFS) · Zod 4 · Zustand · NativeWind 4 · i18next (de/en) ·
+expo-notifications (nur lokal) · date-fns · FlashList · Vitest

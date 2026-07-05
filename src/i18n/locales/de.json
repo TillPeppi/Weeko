@@ -1,0 +1,668 @@
+{
+  "common": {
+    "appName": "Weeko",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "done": "Fertig",
+    "skip": "Überspringen",
+    "next": "Weiter",
+    "back": "Zurück",
+    "confirm": "Bestätigen",
+    "add": "Hinzufügen",
+    "close": "Schließen",
+    "yes": "Ja",
+    "no": "Nein",
+    "today": "Heute",
+    "loading": "Lädt …",
+    "none": "Keine",
+    "optional": "optional",
+    "minutes": "Minuten",
+    "minutesShort": "min",
+    "from": "Von",
+    "to": "Bis",
+    "kg": "kg",
+    "error": "Fehler",
+    "retry": "Erneut versuchen"
+  },
+  "tabs": {
+    "week": "Woche",
+    "today": "Heute",
+    "training": "Training",
+    "food": "Ernährung",
+    "tasks": "Aufgaben",
+    "settings": "Einstellungen"
+  },
+  "blockTypes": {
+    "work": "Arbeit",
+    "handball": "Handball",
+    "training": "Training",
+    "dog": "Hund",
+    "meal": "Essen",
+    "hobby": "Hobby",
+    "task": "Aufgabe",
+    "free": "Frei"
+  },
+  "blockStatus": {
+    "planned": "Geplant",
+    "active": "Aktiv",
+    "done": "Erledigt",
+    "skipped": "Übersprungen"
+  },
+  "weekdays": {
+    "1": "Montag",
+    "2": "Dienstag",
+    "3": "Mittwoch",
+    "4": "Donnerstag",
+    "5": "Freitag",
+    "6": "Samstag",
+    "7": "Sonntag"
+  },
+  "weekdaysShort": {
+    "1": "Mo",
+    "2": "Di",
+    "3": "Mi",
+    "4": "Do",
+    "5": "Fr",
+    "6": "Sa",
+    "7": "So"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Willkommen bei Weeko",
+      "subtitle": "Deine Woche wird extern geplant — Weeko führt dich durch den Alltag: Zeitstrahl, Aufgaben, Training, Erinnerungen.",
+      "start": "Los geht's",
+      "skipAll": "Einrichtung überspringen"
+    },
+    "structure": {
+      "title": "Deine Wochenstruktur",
+      "subtitle": "Arbeitszeiten, Arbeitsort und feste Blöcke — alles später änderbar.",
+      "workTime": "Arbeitszeit",
+      "workStart": "Arbeitsbeginn",
+      "workEnd": "Arbeitsende",
+      "workLocation": "Arbeitsort",
+      "office": "Büro",
+      "home": "Homeoffice",
+      "noWork": "Kein Arbeitstag",
+      "doneBy": "Tag meist fertig um",
+      "fixedBlocks": "Feste Blöcke",
+      "noFixedBlocks": "Keine festen Blöcke"
+    },
+    "profile": {
+      "title": "Körperprofil",
+      "subtitle": "Phase 1 speichert diese Werte nur — die Kalorienrechnung kommt später.",
+      "height": "Größe (cm)",
+      "age": "Alter",
+      "sex": "Geschlecht",
+      "male": "Männlich",
+      "female": "Weiblich",
+      "other": "Divers",
+      "weight": "Gewicht (kg)",
+      "goal": "Ziel",
+      "leanGain": "Lean Gain (+0,25–0,5 kg/Woche)"
+    },
+    "equipment": {
+      "title": "Equipment & Übungen",
+      "subtitle": "Aus deinem Equipment leiten wir eine Übungsliste ab — frei editierbar.",
+      "equipmentTitle": "Equipment",
+      "exercisesTitle": "Übungen",
+      "weighted": "Mit Zusatzgewicht"
+    },
+    "preferences": {
+      "title": "Sprache & Design",
+      "subtitle": "Wie soll Weeko aussehen und sprechen?"
+    },
+    "finish": {
+      "title": "Alles bereit!",
+      "subtitle": "Importiere am Sonntag deine geplante Woche als JSON — oder schau dich erst mal um.",
+      "cta": "Weeko starten"
+    }
+  },
+  "week": {
+    "title": "Woche",
+    "weekLabel": "KW {{week}}",
+    "weekOfYear": "KW {{week}} / {{year}}",
+    "empty": {
+      "title": "Noch keine Woche geplant",
+      "subtitle": "Importiere die JSON-Planung deiner KI oder erstelle eine Woche aus einem Template.",
+      "importCta": "Woche importieren",
+      "templateCta": "Aus Template erstellen"
+    },
+    "saveAsTemplate": "Als Template speichern",
+    "templateName": "Template-Name",
+    "templateSaved": "Template gespeichert",
+    "import": {
+      "title": "Wochen-Import",
+      "subtitle": "JSON einfügen oder Datei wählen — Weeko validiert und zeigt eine Vorschau.",
+      "pasteLabel": "JSON einfügen",
+      "pastePlaceholder": "{ \"schemaVersion\": 1, … }",
+      "pickFile": "Datei wählen",
+      "validate": "Prüfen & Vorschau",
+      "errorsTitle": "Der Import enthält Fehler",
+      "warningsTitle": "Hinweise der Regel-Engine",
+      "warningsSubtitle": "Warnungen blockieren den Import nicht — du entscheidest.",
+      "atDayBlock": "Tag {{day}}, Block {{block}}",
+      "atDay": "Tag {{day}}",
+      "atTask": "Aufgabe {{task}}",
+      "errors": {
+        "invalidJson": "Das ist kein gültiges JSON.",
+        "invalidTime": "Ungültige Uhrzeit (erwartet HH:mm).",
+        "invalidDate": "Ungültiges Datum (erwartet JJJJ-MM-TT).",
+        "invalidBlockType": "Unbekannter Block-Typ.",
+        "missingTitle": "Titel fehlt.",
+        "missingCategory": "Kategorie fehlt.",
+        "invalidEstimatedMinutes": "Ungültige Dauer-Schätzung.",
+        "unsupportedVersion": "Nicht unterstützte Schema-Version (erwartet 1).",
+        "invalidYear": "Ungültiges Jahr.",
+        "invalidIsoWeek": "Ungültige Kalenderwoche (1–53).",
+        "noDays": "Die Woche enthält keine Tage.",
+        "tooManyDays": "Mehr als 7 Tage angegeben.",
+        "duplicateDate": "Datum kommt doppelt vor.",
+        "dateOutsideWeek": "Datum liegt außerhalb der angegebenen Kalenderwoche.",
+        "endBeforeStart": "endTime liegt vor startTime.",
+        "outsideDayBounds": "Block liegt außerhalb von 05:00–24:00.",
+        "missingOrWrongType": "Feld fehlt oder hat den falschen Typ.",
+        "invalidValue": "Ungültiger Wert.",
+        "unknownField": "Unbekanntes Feld.",
+        "generic": "Ungültige Eingabe."
+      },
+      "warnings": {
+        "bigTrainingBeforeHandballDay": "„{{title}}“ am {{date}}: großes Eigentraining am Tag vor einem Handball-Tag.",
+        "trainingOnRegenerationDay": "„{{title}}“ am {{date}}: Mittwoch & Sonntag sind Regenerationsanker — kein intensives Training.",
+        "bigTrainingBeforeSameDayHandball": "„{{title}}“ am {{date}}: große Session mit Handball später am selben Tag.",
+        "overlappingBlocks": "{{date}}: „{{titleA}}“ und „{{titleB}}“ überlappen sich."
+      },
+      "preview": {
+        "title": "Vorschau",
+        "subtitle": "Blöcke antippen zum Bearbeiten. Übernehmen ersetzt die Zielwoche.",
+        "apply": "Woche übernehmen",
+        "applied": "Woche übernommen",
+        "replaceTitle": "Woche ersetzen?",
+        "replaceMessage": "KW {{week}}/{{year}} existiert bereits. Der Import ersetzt alle Blöcke und Wochen-Aufgaben dieser Woche.",
+        "editBlock": "Block bearbeiten",
+        "deleteBlock": "Block löschen",
+        "blockTitle": "Titel",
+        "blockType": "Typ",
+        "blockStart": "Beginn",
+        "blockEnd": "Ende"
+      },
+      "templates": {
+        "title": "Wochen-Templates",
+        "createFrom": "Woche aus Template erstellen",
+        "empty": "Noch keine Templates gespeichert.",
+        "targetWeek": "Zielwoche"
+      }
+    },
+    "balance": {
+      "title": "Wochenbilanz",
+      "done": "erledigt",
+      "skipped": "übersprungen",
+      "open": "offen"
+    }
+  },
+  "today": {
+    "title": "Heute",
+    "now": "Jetzt",
+    "next": "Als Nächstes",
+    "nothingPlanned": "Heute ist nichts (mehr) geplant.",
+    "noWeek": "Für diese Woche ist noch nichts importiert.",
+    "openTasks": "Offene Aufgaben",
+    "noOpenTasks": "Alles erledigt 🎉",
+    "startTraining": "Training starten",
+    "trainingActive": "Training läuft",
+    "continueTraining": "Weiter trainieren",
+    "untilTime": "bis {{time}}",
+    "remainingHm": "noch {{h}} h {{mm}} min",
+    "remainingM": "noch {{m}} min",
+    "setProgress": "Satz {{current}}/{{total}}",
+    "clock": "Uhr"
+  },
+  "tasks": {
+    "title": "Aufgaben",
+    "new": "Neue Aufgabe",
+    "edit": "Aufgabe bearbeiten",
+    "taskTitle": "Titel",
+    "category": "Kategorie",
+    "estimatedMinutes": "Geschätzte Dauer (min)",
+    "recurrence": "Wiederholung",
+    "recurrenceNone": "Einmalig",
+    "recurrenceDaily": "Täglich",
+    "recurrenceWeekly": "Wöchentlich",
+    "window": "Zeitfenster",
+    "windowDay": "Tag",
+    "open": "Offen",
+    "completed": "Erledigt",
+    "empty": "Keine Aufgaben — importiere eine Woche oder lege eine an.",
+    "fromWeekPlan": "Aus Wochenplan",
+    "categories": {
+      "mealprep": "Meal-Prep",
+      "errands": "Einkauf & Besorgungen",
+      "guitar": "Gitarre",
+      "household": "Haushalt",
+      "other": "Sonstiges"
+    }
+  },
+  "food": {
+    "title": "Ernährung",
+    "today": "Heute",
+    "totals": "Tagesbilanz",
+    "min": "mind.",
+    "max": "max.",
+    "addEntry": "Hinzufügen",
+    "mealEmpty": "Noch nichts eingetragen.",
+    "proteinShort": "Eiweiß",
+    "meals": {
+      "breakfast": "Frühstück",
+      "lunch": "Mittagessen",
+      "dinner": "Abendessen",
+      "snack": "Snacks"
+    },
+    "nutrients": {
+      "kcal": "Kalorien",
+      "fat": "Fett",
+      "saturatedFat": "davon gesättigt",
+      "carbs": "Kohlenhydrate",
+      "sugars": "Zucker",
+      "fiber": "Ballaststoffe",
+      "protein": "Eiweiß",
+      "salt": "Salz"
+    },
+    "micros": {
+      "title": "Vitamine & Mineralstoffe",
+      "hint": "Prozent des Tagesbedarfs (EU-Referenzwerte). Nicht jedes Produkt meldet Mikronährstoffe – die Werte sind eher eine Untergrenze.",
+      "vitaminA": "Vitamin A",
+      "vitaminC": "Vitamin C",
+      "vitaminD": "Vitamin D",
+      "vitaminE": "Vitamin E",
+      "vitaminB12": "Vitamin B12",
+      "folate": "Folat",
+      "calcium": "Calcium",
+      "iron": "Eisen",
+      "magnesium": "Magnesium",
+      "potassium": "Kalium",
+      "zinc": "Zink",
+      "iodine": "Jod"
+    },
+    "add": {
+      "title": "Essen hinzufügen",
+      "scan": "Scannen",
+      "searchTab": "Suchen",
+      "custom": "Eigener Eintrag",
+      "barcodeManual": "Barcode eingeben",
+      "lookup": "Nachschlagen",
+      "searchLabel": "Produktsuche",
+      "searchPlaceholder": "z. B. Skyr, Haferflocken …",
+      "searchButton": "Suchen",
+      "noResults": "Keine Treffer. Tipp: Barcode scannen – Lidl-/Aldi-Produkte sind fast immer per Barcode erfasst.",
+      "notFound": "Produkt nicht gefunden. Du kannst es als eigenen Eintrag anlegen.",
+      "networkError": "Open Food Facts ist gerade nicht erreichbar.",
+      "amount": "Menge (g/ml)",
+      "serving": "Portion",
+      "package": "Packung",
+      "per100": "Pro 100 g",
+      "meal": "Mahlzeit",
+      "save": "Eintragen",
+      "customName": "Name",
+      "customHint": "Nährwerte pro 100 g — die Menge bestimmt, was gezählt wird. Mit Barcode ist das Produkt später scanbar.",
+      "recent": "Zuletzt verwendet",
+      "cameraPermission": "Kamerazugriff wird benötigt, um Barcodes zu scannen.",
+      "grantPermission": "Zugriff erlauben",
+      "scannerWebUnsupported": "Dieser Browser unterstützt keinen Kamera-Scan – Barcode einfach manuell eingeben.",
+      "attribution": "Produktdaten: Open Food Facts (openfoodfacts.org, ODbL)",
+      "favorites": "Favoriten",
+      "barcodeOptional": "Barcode (optional)",
+      "basicFoods": "Grundnahrungsmittel",
+      "withMicros": "inkl. Vitamine & Mineralstoffe"
+    },
+    "trend": {
+      "title": "Wochen-Trend",
+      "avg": "Ø {{kcal}} kcal/Tag"
+    },
+    "activityBonus": "{{base}} Basisziel + {{kcal}} kcal Aktivität (Apple Health)",
+    "supplements": {
+      "title": "Nährstoff-Check",
+      "intro": "Im Schnitt der letzten {{days}} erfassten Tage unter 50 % des Tagesbedarfs:",
+      "sources": {
+        "vitaminA": "Gute Quellen: Karotten, Süßkartoffel, Spinat, Eier",
+        "vitaminC": "Gute Quellen: Paprika, Brokkoli, Kiwi, Zitrusfrüchte",
+        "vitaminD": "Über Essen kaum zu decken — v. a. Sonnenlicht; etwas in fettem Fisch und Eiern",
+        "vitaminE": "Gute Quellen: Mandeln, Olivenöl, Erdnussbutter",
+        "vitaminB12": "Gute Quellen: Fisch, Fleisch, Milchprodukte, Eier (bei veganer Ernährung Supplement nötig)",
+        "folate": "Gute Quellen: Spinat, Linsen, Kichererbsen, Brokkoli",
+        "calcium": "Gute Quellen: Milchprodukte, Käse, Tofu, Mandeln",
+        "iron": "Gute Quellen: Haferflocken, Linsen, Rindfleisch, Spinat",
+        "magnesium": "Gute Quellen: Nüsse, Haferflocken, Vollkorn, Leinsamen",
+        "potassium": "Gute Quellen: Kartoffeln, Bananen, Avocado, Hülsenfrüchte",
+        "zinc": "Gute Quellen: Rindfleisch, Käse, Haferflocken, Nüsse",
+        "iodine": "Gute Quellen: Seefisch, Milch, jodiertes Speisesalz"
+      },
+      "supplementNote": "Bleibt ein Wert über Wochen niedrig, obwohl du abwechslungsreich isst, kann ein Nahrungsergänzungsmittel sinnvoll sein — Dosierung im Zweifel ärztlich abklären.",
+      "dataNote": "Produkte ohne Mikronährstoff-Angaben zählen hier nicht mit — Grundnahrungsmittel aus der Suche sind vollständig erfasst.",
+      "disclaimer": "Keine medizinische Beratung."
+    }
+  },
+  "training": {
+    "title": "Training",
+    "active": "Aktive Session",
+    "start": "Session starten",
+    "adhoc": "Freie Session",
+    "fromTemplate": "Aus Vorlage",
+    "templates": "Vorlagen",
+    "exercises": "Übungen",
+    "exercise": "Übung",
+    "addExercise": "Übung hinzufügen",
+    "sets": "Sätze",
+    "set": "Satz {{index}}",
+    "reps": "Wdh",
+    "weight": "Gewicht (kg)",
+    "addSet": "Satz hinzufügen",
+    "lastTime": "Letztes Mal: {{summary}}",
+    "lastTimeSet": "{{sets}}×{{reps}} @ {{weight}} kg",
+    "lastTimeSetNoWeight": "{{sets}}×{{reps}}",
+    "noLastTime": "Erste Session mit dieser Übung",
+    "finish": "Session beenden",
+    "abort": "Abbrechen",
+    "abortConfirm": "Session wirklich abbrechen? Geloggte Sätze bleiben gespeichert.",
+    "history": "Verlauf",
+    "historyEmpty": "Noch keine Sessions.",
+    "sessionDone": "Session gespeichert 💪",
+    "duration": "{{minutes}} min",
+    "startedAt": "Gestartet {{time}}",
+    "rest": "Pause",
+    "restPlus30": "+30 s",
+    "volume": "Σ {{kg}} kg",
+    "superset": "Supersatz",
+    "supersetLabel": "Supersatz {{letter}}",
+    "linkSuperset": "Mit nächster Übung zum Supersatz",
+    "unlinkSuperset": "Supersatz auflösen",
+    "searchExercise": "Übung suchen …",
+    "searchNoResults": "Keine Übung gefunden — leg sie unten in den Einstellungen an.",
+    "emptySessionTitle": "Stell dir deine Session zusammen",
+    "emptySessionBody": "Wähle deine erste Übung — Sätze und Gewichte werden vom letzten Mal vorausgefüllt.",
+    "lastUsed": "Zuletzt: {{summary}}",
+    "neverTrained": "Noch nie trainiert",
+    "muscleGroups": {
+      "pull": "Zug",
+      "push": "Druck",
+      "legs": "Beine",
+      "core": "Core",
+      "cardio": "Cardio",
+      "fullBody": "Ganzkörper",
+      "other": "Eigene Übungen"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "week": "Diese Woche",
+      "month": "Dieser Monat",
+      "year": "Dieses Jahr",
+      "legend": "{{count}} Trainingstage in diesem Jahr — jeder leuchtende Punkt ist ein Tag"
+    }
+  },
+  "stats": {
+    "title": "Statistik",
+    "subtitle": "Trends und Rekorde aus deinen Daten — Training, Ernährung, Wochenplan und Gesundheit.",
+    "weekShort": "KW{{week}}",
+    "training": {
+      "empty": "Noch keine abgeschlossenen Sessions — schließe eine Trainingseinheit ab, um Statistiken zu sehen.",
+      "currentStreak": "Aktuelle Serie",
+      "longestStreak": "Längste Serie",
+      "weeksUnit": "Wochen",
+      "avgDuration": "Ø Dauer",
+      "volumeTitle": "Wochen-Volumen",
+      "volumeLegend": "Σ Wdh × kg pro Woche (letzte 8 KW) · Ø {{sessions}} Sessions/Woche",
+      "monthlyVolumeTitle": "Monats-Volumen",
+      "monthlyVolumeLegend": "Σ Wdh × kg pro Monat (letzte 12) · Ø {{sessions}} Sessions/Monat",
+      "progressionTitle": "Progression pro Übung",
+      "newPr": "Neuer Rekord! 🎉",
+      "progressionEmpty": "Für diese Übung sind noch keine geloggten Sätze vorhanden.",
+      "prMaxWeight": "Max. Gewicht",
+      "prE1rm": "Bestes 1RM (gesch.)",
+      "prVolume": "Bestes Volumen",
+      "prReps": "Meiste Wdh",
+      "chartMaxWeight": "Schwerster Satz pro Session (kg)",
+      "chartMaxReps": "Meiste Wdh pro Session",
+      "chartLegend": "Grüne Balken markieren einen neuen Rekord.",
+      "weightGainTitle": "KG-Zuwachs pro Übung",
+      "weightGainHint": "Durchschnittlicher Gewichtszuwachs ab der 2. Einheit (neue Übungen zählen erst ab dann).",
+      "weightGainEmpty": "Noch keine Progression — trainiere jede Übung mindestens 2× für den Vergleich.",
+      "weightGainSessions": "{{count}}× trainiert",
+      "weightGainGain": "{{gain}} kg Zuwachs"
+    },
+    "food": {
+      "empty": "Noch keine Einträge — trage Mahlzeiten ein, um Statistiken zu sehen.",
+      "surplus": "Überschuss",
+      "deficit": "Defizit",
+      "balanceTitle": "Kalorienbilanz (diese Woche)",
+      "balanceEmpty": "Diese Woche noch nichts erfasst.",
+      "balanceEstimate": "≈ {{kg}} kg (7700 kcal ≈ 1 kg)",
+      "balanceDays": "über {{count}} erfasste Tage · Ziel {{target}} kcal/Tag",
+      "kcalWeeklyTitle": "Kalorien pro Woche (Ø/Tag)",
+      "kcalWeeklyLegend": "Ø kcal pro erfasstem Tag (letzte 4 KW) · Ziel {{target}} kcal",
+      "proteinWeekRow": "Eiweiß KW{{week}} · {{days}} Tage",
+      "proteinLegend": "Ø Eiweiß pro erfasstem Tag gegen das Tagesziel.",
+      "mealSplitTitle": "Verteilung nach Mahlzeit",
+      "topFoodsTitle": "Häufigste Lebensmittel",
+      "topFoodMeta": "{{count}}× · {{kcal}} kcal",
+      "microTrendTitle": "Mikronährstoff-Trend",
+      "microTrendHint": "Ø % des Tagesbedarfs pro erfasstem Tag, älteste bis neueste KW (nur Werte mit Daten).",
+      "qualityTitle": "Essensqualität (letzte Woche)",
+      "qualityEmpty": "Noch nicht genug Einträge für eine Qualitäts-Übersicht.",
+      "proteinSourcesTitle": "Proteinquellen",
+      "meatPercent": "Fleisch",
+      "fishPercent": "Fisch",
+      "plantPercent": "Pflanze",
+      "dairyPercent": "Milch",
+      "fiberTitle": "Ballaststoffe",
+      "fiberGrams": "Ø {{grams}} g/Tag",
+      "fiberPerKcal": "{{ratio}} g/100 kcal",
+      "vegetableTitle": "Gemüse-Anteil"
+    },
+    "plan": {
+      "empty": "Noch keine Woche geplant und keine Aufgaben — importiere eine Woche, um Statistiken zu sehen.",
+      "adherenceTitle": "Plan-Treue pro Woche",
+      "adherenceLegend": "Anteil erledigter Blöcke pro Woche (letzte 8 KW).",
+      "timeBudgetTitle": "Zeitbudget KW{{week}}",
+      "timeBudgetValue": "{{done}} / {{planned}} h",
+      "timeBudgetLegend": "Erledigte vs. geplante Stunden pro Blocktyp (aktuellste Woche).",
+      "skipTitle": "Häufig übersprungen",
+      "skipValue": "{{skipped}}/{{total}} · {{percent}} %",
+      "weekdayTitle": "Übersprungen nach Wochentag",
+      "weekdayLegend": "Anteil übersprungener Blöcke je Wochentag (alle geladenen Wochen).",
+      "tasksTitle": "Aufgaben pro Kategorie",
+      "tasksValue": "{{done}}/{{total}}"
+    },
+    "health": {
+      "tab": "Gesundheit",
+      "noData": "Keine Health-Daten der letzten 7 Tage gefunden.",
+      "avgSleep": "Ø Schlaf",
+      "avgSteps": "Ø Schritte",
+      "avgRestingHr": "Ø Ruhepuls",
+      "avgHrv": "Ø HRV",
+      "daysWithData": "Ø über {{count}} von {{total}} Tagen mit Daten",
+      "sleepTitle": "Schlaf pro Nacht",
+      "sleepLegend": "Schlafdauer je Nacht seit {{from}}.",
+      "readinessTitle": "Erholung im Verlauf",
+      "avgReadiness": "Ø",
+      "readinessLegend": "Readiness-Score je Tag (aus HRV, Schlaf, Ruhepuls; farbcodiert nach Niveau).",
+      "hrvTitle": "HRV-Verlauf",
+      "hrvLegend": "Herzfrequenzvariabilität (SDNN, ms) je Tag.",
+      "weightTitle": "Körpergewicht (30 Tage)",
+      "weightLegend": "Gewichtsverlauf der letzten 30 Tage mit % Veränderung.",
+      "weightEmpty": "Noch keine Messungen — starte Gewicht-Tracking im Health-Tab.",
+      "current": "Aktuell",
+      "avgWeight30d": "Ø 30 Tage",
+      "change30d": "30-Tage-Trend",
+      "fatPercent": "Körperfett"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": {
+      "title": "Sprache",
+      "de": "Deutsch",
+      "en": "Englisch"
+    },
+    "theme": {
+      "title": "Design",
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "subtitle": "Pro Kategorie: an/aus, Ruhezeiten und Eskalations-Intervall.",
+      "enabled": "Aktiv",
+      "quietHours": "Ruhezeit",
+      "quietFrom": "Nie nach",
+      "quietTo": "Nie vor",
+      "escalation": "Erinnern alle",
+      "digestTime": "Uhrzeit",
+      "snooze": "Snooze",
+      "digestPresets": {
+        "morning": "Morgens",
+        "noon": "Mittags",
+        "evening": "Abends"
+      },
+      "webUnsupported": "Lokale Benachrichtigungen sind im Browser nicht verfügbar — nutze die iOS/Android-App.",
+      "permissionDenied": "Benachrichtigungen sind auf Systemebene deaktiviert.",
+      "categories": {
+        "blockStart": "Blockstart",
+        "coach": "Coach (Morgen-Tipp)"
+      }
+    },
+    "profile": "Profil & Wochenstruktur",
+    "profileSection": "Körperprofil",
+    "structureSection": "Wochenstruktur",
+    "exercisesSection": "Equipment & Übungen",
+    "data": {
+      "title": "Daten",
+      "export": "Daten exportieren (JSON)",
+      "exportDone": "Export erstellt",
+      "deleteAll": "Alle Daten löschen",
+      "deleteConfirmTitle": "Wirklich alles löschen?",
+      "deleteConfirmMessage": "Alle Wochen, Aufgaben, Trainings und Einstellungen werden unwiderruflich gelöscht.",
+      "deleted": "Alle Daten gelöscht"
+    },
+    "rerunOnboarding": "Einrichtung erneut durchlaufen",
+    "about": "Weeko — lokal, offline, deine Daten bleiben auf dem Gerät.",
+    "nutrition": {
+      "title": "Ernährungsziele",
+      "hint": "Leere Felder werden automatisch aus dem Profil berechnet.",
+      "kcal": "Kalorien (kcal)",
+      "protein": "Eiweiß mind. (g)",
+      "fiber": "Ballaststoffe mind. (g)",
+      "sugars": "Zucker max. (g)",
+      "salt": "Salz max. (g)"
+    }
+  },
+  "notifications": {
+    "blockStart": {
+      "title": "{{title}}",
+      "body": "Beginnt jetzt ({{start}}–{{end}})"
+    },
+    "taskReminder": {
+      "title": "Aufgabe: {{title}}",
+      "body": "Geplant für {{time}}"
+    },
+    "taskEscalation": {
+      "title": "Noch offen: {{title}}",
+      "body": "Erledigen oder in den Einstellungen stummschalten."
+    },
+    "coach": {
+      "title": "Dein Coach für heute"
+    }
+  },
+  "seeds": {
+    "blocks": {
+      "handball": "Handball-Training",
+      "dogEvening": "Hunderunde",
+      "dogLunch": "Hund Mittagsrunde",
+      "trading": "Trading-Abend"
+    },
+    "equipment": {
+      "pullupBar": "Klimmzugstange",
+      "dipBars": "Dip-Barren",
+      "heavyKettlebell": "Kettlebell (schwer, >16 kg)",
+      "treadmill": "Laufband"
+    },
+    "exercises": {
+      "pullup": "Klimmzug",
+      "chinup": "Chin-up",
+      "dip": "Dip",
+      "pushup": "Liegestütz",
+      "pikePushup": "Pike Push-up",
+      "kbSwing": "Kettlebell Swing",
+      "gobletSquat": "Goblet Squat",
+      "kbLunge": "KB-Ausfallschritt",
+      "farmersCarry": "Farmer's Carry",
+      "treadmillRun": "Laufband-Intervall",
+      "burpee": "Burpee",
+      "plank": "Plank",
+      "kbRow": "KB-Rudern einarmig",
+      "kbPress": "KB-Schulterdrücken",
+      "kbDeadlift": "KB-Kreuzheben",
+      "diamondPushup": "Diamant-Liegestütz",
+      "bulgarianSplitSquat": "Bulgarian Split Squat",
+      "pistolSquat": "Pistol Squat",
+      "gluteBridge": "Glute Bridge",
+      "calfRaise": "Wadenheben",
+      "wallSit": "Wandsitz",
+      "sidePlank": "Seitstütz",
+      "hollowHold": "Hollow Body Hold",
+      "hangingLegRaise": "Hängendes Beinheben",
+      "russianTwist": "Russian Twist",
+      "mountainClimber": "Mountain Climbers",
+      "jumpSquat": "Jump Squat"
+    },
+    "sessionTemplates": {
+      "hyrox": "Hyrox-Session",
+      "weightedCalisthenics": "Weighted Calisthenics",
+      "upperShort": "Oberkörper kurz (20–30 min)"
+    }
+  },
+  "health": {
+    "title": "Schlaf & Gesundheit",
+    "webUnsupported": "Apple-Health-Daten (Schlaf, Aktivität) gibt es nur in der iOS-App.",
+    "connect": "Mit Apple Health verbinden",
+    "connectHint": "Zeigt Schlaf (Apple Watch / Helio Ring) und Tagesaktivität aus Apple Health.",
+    "noData": "Keine Health-Daten für heute gefunden. Prüfe den Lesezugriff in der Health-App (Profil → Datenzugriff → Weeko).",
+    "stages": {
+      "deep": "Tief",
+      "core": "Kern",
+      "rem": "REM",
+      "awake": "Wach"
+    },
+    "inBed": "{{from}}–{{to}} Uhr",
+    "steps": "Schritte",
+    "activeKcal": "Aktivität",
+    "restingHr": "Ruhepuls",
+    "hrv": "HRV",
+    "readiness": {
+      "title": "Erholung",
+      "bands": {
+        "low": "niedrig",
+        "moderate": "moderat",
+        "high": "hoch"
+      }
+    }
+  },
+  "coach": {
+    "title": "Coach",
+    "dismiss": "Ausblenden",
+    "insights": {
+      "lowReadinessIntense": "Deine Erholung ist heute niedrig ({{score}}/100). Überleg dir, ob „{{title}}“ heute wirklich sein muss.",
+      "lowProteinTrend": "Dein Eiweiß liegt diese Woche im Schnitt bei {{avg}} g/Tag — Ziel sind {{target}} g. Plane etwas mehr Protein ein.",
+      "trainingConsistency": "Stark: {{days}} Trainingstage in den letzten 7 Tagen. Weiter so!",
+      "regenerationDayIntense": "Heute ist ein Regenerationstag — „{{title}}“ ist eine intensive Einheit. Lieber locker machen oder verschieben.",
+      "highTrainingStreak": "{{days}} Trainingstage am Stück. Gönn dir einen Ruhetag, damit du dich erholst.",
+      "progressionStalled": "Bei {{exercise}} kein neuer Bestwert seit {{sessions}} Einheiten (zuletzt {{weight}} kg) — steigere Gewicht oder Wdh."
+    }
+  },
+  "body": {
+    "title": "Körper-Level",
+    "strain": "Belastung",
+    "sleepNeed": "Schlafbedarf",
+    "disclaimer": "Schätzung aus Schlaf & Herzfrequenz — keine medizinische Beratung."
+  }
+}
