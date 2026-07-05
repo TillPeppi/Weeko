@@ -1,6 +1,33 @@
 # Weeko — Fortschritt
 
-> Nach jeder Session aktualisieren. Stand: **2026-07-05** (Session 1: Phase-1-Aufbau; Session 2: Design-Richtung "Dark Focus"; Session 3: Dark Focus auf alle Screens ausgerollt; Session 4: Essenstracker; Session 5: Swipe/Animationen/Wochenbilanz/Essenstracker-Ausbau; Session 7: Statistik-Screen; Session 8: Redesign "Neo Brutal"; Session 9: Coach-Engine — regelbasierte „KI"; Session 10: Körper-Level / Strain / Schlafbedarf / HRV-Verlauf — Bevel-Kernkompetenz; Session 11: Supersätze; Session 12: Übungskatalog + Piktogramme + freie Session).
+> Nach jeder Session aktualisieren. Stand: **2026-07-05** (Session 1: Phase-1-Aufbau; Session 2: Design-Richtung "Dark Focus"; Session 3: Dark Focus auf alle Screens ausgerollt; Session 4: Essenstracker; Session 5: Swipe/Animationen/Wochenbilanz/Essenstracker-Ausbau; Session 7: Statistik-Screen; Session 8: Redesign "Neo Brutal"; Session 9: Coach-Engine — regelbasierte „KI"; Session 10: Körper-Level / Strain / Schlafbedarf / HRV-Verlauf — Bevel-Kernkompetenz; Session 11: Supersätze; Session 12: Übungskatalog + Piktogramme + freie Session; Session 13: Waage + erweiterte Stats).
+
+## 🏋️ Session 13 — Waage + erweiterte Statistiken (alle Features)
+
+Phase-1-Extension: **Waage-Integration** (Body-Measurement) + **erweiterte Stats** mit monatlichen Trends, KG-Zuwachs pro Übung, und Essensqualität:
+
+- **Body-Measurement-Schema (Migration 0009):** neue Tabelle `body_measurement` (date, weight_kg, fat_percent optional, created_at).
+- **Domain:** 
+  - `domain/bodyStats.ts` — `bodyStatsFrom(measurements)` liefert Trend (letzte 30 Tage), 30-Tage-Durchschnitt, 30-Tage-Veränderung (kg + %), monatlicher Durchschnitt, `formatWeightChange()`.
+  - `domain/trainingStats.ts` erweitert: `monthlyTraining()` (Volume/Sessions/Days pro Kalendermonat, letzte 12) + `exerciseWeightGains()` (KG-Zuwachs **ab der 2. Session** pro Übung mit Logik „neue Übung zählt erst beim 2. Mal").
+  - `domain/foodQuality.ts` (neu) — Essensqualität-Analytik: `foodQualityMetrics()` identifiziert Proteinquellen (Fleisch/Fisch/Pflanze/Milch/Ei) + Gemüse-Anteil + Ballaststoff-Qualität; `weeklyFoodQuality()` aggregiert täglich.
+- **Repo:** `db/repos/bodyRepo.ts` — `addMeasurement`, `updateMeasurement`, `listMeasurements(days)`, `latestMeasurement()`, `measurementsSince(date)`.
+- **Trainings-Repo erweitert:** `listStatsSetRowsWithSessionIndex()` berechnet sessionIndex pro Exercise (für KG-Gains).
+- **Tests:** 180 gesamt grün (11 neu für bodyStats, foodQuality, trainingStatsExt; alle Locale-Parity grün).
+- **i18n:** `stats.training.{monthlyVolumeTitle,monthlyVolumeLegend,weightGainTitle,weightGainHint,...}` + `stats.food.{qualityTitle,proteinSourcesTitle,meatPercent,fishPercent,...}` + `stats.health.{weightTitle,weightLegend,current,avgWeight30d,change30d,fatPercent}` (de + en).
+- **Makro-Karte im Ernährungs-Stats-Tab (13b):** `weeklyNutrition` liefert jetzt
+  auch `avgSugars/avgFiber/avgSalt/avgSaturatedFat` (Salz mit 1 Dezimale);
+  `NutritionStatsSection` zeigt eine neue Karte „Alle Makros KW{{week}} (Ø/Tag)"
+  für die letzte erfasste Woche: KH + Fett gegen Referenz (accent), Zucker/Salz/
+  ges. Fett als **Obergrenzen** (orange bei Überschreitung, sonst grün),
+  Ballaststoffe als **Untergrenze** (grün ab Ziel). Labels reused aus
+  `food.nutrients.*`, neue Keys `stats.food.{macroTitle,macroLegend}` (de/en).
+- **Noch zu bauen:** UI-Komponenten im Stats-Screen (Health-Tab für Weight-Trend, Training-Tab für Monthly + Weight-Gains, Nutrition-Tab für Food-Quality) + Body-Measurement-Eingabe-Dialog. Domain + Domain-Tests + i18n + Migrations sind **komplett**.
+**Verifikation:** `npm test` 181✓, `npm run typecheck` sauber, Locale-Parity ✓.
+**Web (Chrome, verifiziert):** Eigener Eintrag (650 kcal / 40 P / 70 KH / 20 F
+pro 100 g × 300 g) → Ernährungs-Stats zeigen die Makro-Karte mit korrekten
+Werten (KH Ø 210/276 g, Fett Ø 60/73 g, Zucker/Salz/Ballaststoffe 0 mit
+Obergrenzen-Legende), keine Konsolen-Fehler.
 
 ## 🏋️ Session 12 — Übungskatalog × 2, Piktogramme, freie Session neu
 

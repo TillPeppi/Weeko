@@ -446,6 +446,8 @@
       "topFoodMeta": "{{count}}× · {{kcal}} kcal",
       "microTrendTitle": "Micronutrient trend",
       "microTrendHint": "Avg % of daily need per tracked day, oldest to newest week (only values with data).",
+      "macroTitle": "All macros W{{week}} (avg/day)",
+      "macroLegend": "Avg per tracked day vs. your target. Sugar/salt/sat. fat are upper limits (orange = over), fiber is a minimum.",
       "qualityTitle": "Food quality (last week)",
       "qualityEmpty": "Not enough entries yet for a quality overview.",
       "proteinSourcesTitle": "Protein sources",

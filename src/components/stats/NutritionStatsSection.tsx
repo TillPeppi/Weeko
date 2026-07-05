@@ -53,6 +53,11 @@ export function NutritionStatsSection({ entries, targets, today }: Props) {
     );
   }, [entries]);
   const top = useMemo(() => topFoods(entries, 5), [entries]);
+  // latest week that has data — feeds the full macro breakdown
+  const latestWeek = useMemo(
+    () => [...weekly].reverse().find((week) => week.trackedDays > 0),
+    [weekly]
+  );
   const microRows = useMemo(() => {
     const weeks = weeklyMicros(entries, today, 4);
     const rows: { key: MicroKey; percents: (number | null)[]; avg: number }[] = [];
@@ -155,6 +160,67 @@ export function NutritionStatsSection({ entries, targets, today }: Props) {
         </View>
         <Muted className="mt-2 text-xs">{t('stats.food.proteinLegend')}</Muted>
       </Card>
+
+      {latestWeek && (
+        <Card className="mt-4">
+          <SectionTitle>
+            {t('stats.food.macroTitle', { week: latestWeek.isoWeek })}
+          </SectionTitle>
+          <View className="mt-3 gap-3">
+            <PercentRow
+              label={t('food.nutrients.carbs')}
+              valueLabel={`Ø ${latestWeek.avgCarbs} / ${targets.carbsRef} g`}
+              percent={(latestWeek.avgCarbs / targets.carbsRef) * 100}
+              color={accent}
+            />
+            <PercentRow
+              label={t('food.nutrients.fat')}
+              valueLabel={`Ø ${latestWeek.avgFat} / ${targets.fatRef} g`}
+              percent={(latestWeek.avgFat / targets.fatRef) * 100}
+              color={accent}
+            />
+            <PercentRow
+              label={t('food.nutrients.saturatedFat')}
+              valueLabel={`Ø ${latestWeek.avgSaturatedFat} / ${targets.saturatedFatMax} g`}
+              percent={(latestWeek.avgSaturatedFat / targets.saturatedFatMax) * 100}
+              color={
+                latestWeek.avgSaturatedFat > targets.saturatedFatMax
+                  ? uiColor('warning', dark)
+                  : uiColor('success', dark)
+              }
+            />
+            <PercentRow
+              label={t('food.nutrients.sugars')}
+              valueLabel={`Ø ${latestWeek.avgSugars} / ${targets.sugarsMax} g`}
+              percent={(latestWeek.avgSugars / targets.sugarsMax) * 100}
+              color={
+                latestWeek.avgSugars > targets.sugarsMax
+                  ? uiColor('warning', dark)
+                  : uiColor('success', dark)
+              }
+            />
+            <PercentRow
+              label={t('food.nutrients.fiber')}
+              valueLabel={`Ø ${latestWeek.avgFiber} / ${targets.fiberMin} g`}
+              percent={(latestWeek.avgFiber / targets.fiberMin) * 100}
+              color={
+                latestWeek.avgFiber >= targets.fiberMin ? uiColor('success', dark) : accent
+              }
+            />
+            <PercentRow
+              label={t('food.nutrients.salt')}
+              valueLabel={`Ø ${latestWeek.avgSalt} / ${targets.saltMax} g`}
+              percent={(latestWeek.avgSalt / targets.saltMax) * 100}
+              color={
+                latestWeek.avgSalt > targets.saltMax
+                  ? uiColor('warning', dark)
+                  : uiColor('success', dark)
+              }
+            />
+          </View>
+          <Muted className="mt-2 text-xs">{t('stats.food.macroLegend')}</Muted>
+        </Card>
+      )}
 
       <Card className="mt-4">
         <SectionTitle>{t('stats.food.mealSplitTitle')}</SectionTitle>

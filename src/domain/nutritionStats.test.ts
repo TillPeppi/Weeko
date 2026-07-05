@@ -51,6 +51,28 @@ describe('weeklyNutrition', () => {
     expect(points[0].avgKcal).toBe(500);
   });
 
+  it('averages sugars, fiber, salt and saturated fat', () => {
+    const points = weeklyNutrition(
+      [
+        entry('2026-06-29', 2000, {
+          nutrients: { kcal: 2000, sugars: 40, fiber: 28, salt: 4.2, saturatedFat: 18 },
+        }),
+        entry('2026-06-30', 2400, {
+          nutrients: { kcal: 2400, sugars: 60, fiber: 32, salt: 6.4, saturatedFat: 22 },
+        }),
+      ],
+      today,
+      1
+    );
+    expect(points[0]).toMatchObject({
+      trackedDays: 2,
+      avgSugars: 50,
+      avgFiber: 30,
+      avgSalt: 5.3,
+      avgSaturatedFat: 20,
+    });
+  });
+
   it('returns zeroed weeks without entries', () => {
     const points = weeklyNutrition([], today, 2);
     expect(points.every((p) => p.trackedDays === 0 && p.avgKcal === 0)).toBe(true);

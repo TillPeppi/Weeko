@@ -37,6 +37,10 @@ export interface WeeklyNutritionPoint extends IsoWeekRef {
   avgProtein: number;
   avgCarbs: number;
   avgFat: number;
+  avgSugars: number;
+  avgFiber: number;
+  avgSalt: number;
+  avgSaturatedFat: number;
 }
 
 /** Weekly macro averages over the last `weeks` ISO weeks (oldest first). */
@@ -50,10 +54,24 @@ export function weeklyNutrition(
     const inWeek = entries.filter((e) => e.date >= ref.monday && e.date <= end);
     const trackedDays = new Set(inWeek.map((e) => e.date)).size;
     if (trackedDays === 0) {
-      return { ...ref, trackedDays: 0, avgKcal: 0, avgProtein: 0, avgCarbs: 0, avgFat: 0 };
+      return {
+        ...ref,
+        trackedDays: 0,
+        avgKcal: 0,
+        avgProtein: 0,
+        avgCarbs: 0,
+        avgFat: 0,
+        avgSugars: 0,
+        avgFiber: 0,
+        avgSalt: 0,
+        avgSaturatedFat: 0,
+      };
     }
     const total = sumNutrients(inWeek.map(absolute));
     const avg = (value: number | undefined) => Math.round((value ?? 0) / trackedDays);
+    // salt needs one decimal — daily values are in low single digits
+    const avg1 = (value: number | undefined) =>
+      Math.round(((value ?? 0) / trackedDays) * 10) / 10;
     return {
       ...ref,
       trackedDays,
@@ -61,6 +79,10 @@ export function weeklyNutrition(
       avgProtein: avg(total.protein),
       avgCarbs: avg(total.carbs),
       avgFat: avg(total.fat),
+      avgSugars: avg(total.sugars),
+      avgFiber: avg(total.fiber),
+      avgSalt: avg1(total.salt),
+      avgSaturatedFat: avg(total.saturatedFat),
     };
   });
 }

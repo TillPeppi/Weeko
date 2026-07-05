@@ -446,6 +446,8 @@
       "topFoodMeta": "{{count}}× · {{kcal}} kcal",
       "microTrendTitle": "Mikronährstoff-Trend",
       "microTrendHint": "Ø % des Tagesbedarfs pro erfasstem Tag, älteste bis neueste KW (nur Werte mit Daten).",
+      "macroTitle": "Alle Makros KW{{week}} (Ø/Tag)",
+      "macroLegend": "Ø pro erfasstem Tag gegen dein Ziel. Zucker/Salz/ges. Fett sind Obergrenzen (orange = drüber), Ballaststoffe eine Untergrenze.",
       "qualityTitle": "Essensqualität (letzte Woche)",
       "qualityEmpty": "Noch nicht genug Einträge für eine Qualitäts-Übersicht.",
       "proteinSourcesTitle": "Proteinquellen",
