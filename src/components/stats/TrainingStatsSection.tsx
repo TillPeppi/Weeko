@@ -60,7 +60,7 @@ export function TrainingStatsSection({ setRows, sessions, exercises, today }: Pr
     const ids = new Set(setRows.filter((row) => row.done && row.reps).map((row) => row.exerciseId));
     return exercises.filter((exercise) => ids.has(exercise.id));
   }, [setRows, exercises]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected =
     exercisesWithData.find((e) => e.id === selectedId) ?? exercisesWithData[0] ?? null;
 

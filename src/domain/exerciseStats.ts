@@ -6,7 +6,7 @@
  */
 
 export interface ExerciseSetRow {
-  sessionId: number;
+  sessionId: string;
   /** YYYY-MM-DD of the session */
   date: string;
   reps: number | null;
@@ -15,7 +15,7 @@ export interface ExerciseSetRow {
 }
 
 export interface SessionPoint {
-  sessionId: number;
+  sessionId: string;
   date: string;
   /** heaviest set of the session (kg), null when all sets were unweighted */
   maxWeightKg: number | null;
@@ -47,7 +47,7 @@ export function epley1Rm(reps: number, weightKg: number): number {
 
 /** One point per session (done sets only), sorted oldest → newest. */
 export function exerciseProgression(rows: ExerciseSetRow[]): SessionPoint[] {
-  const bySession = new Map<number, { date: string; rows: ExerciseSetRow[] }>();
+  const bySession = new Map<string, { date: string; rows: ExerciseSetRow[] }>();
   for (const row of rows) {
     if (!row.done || !row.reps || row.reps <= 0) continue;
     const entry = bySession.get(row.sessionId) ?? { date: row.date, rows: [] };
@@ -81,7 +81,9 @@ export function exerciseProgression(rows: ExerciseSetRow[]): SessionPoint[] {
       sets: sets.length,
     });
   }
-  return points.sort((a, b) => (a.date === b.date ? a.sessionId - b.sessionId : a.date.localeCompare(b.date)));
+  return points.sort((a, b) =>
+    a.date === b.date ? a.sessionId.localeCompare(b.sessionId) : a.date.localeCompare(b.date)
+  );
 }
 
 function best(
@@ -111,8 +113,8 @@ export function exercisePrs(points: SessionPoint[]): ExercisePrs {
  * Session ids that set a new all-time record (max weight or estimated 1RM)
  * at the time they happened — the "new PR" glow in the chart.
  */
-export function prSessionIds(points: SessionPoint[]): Set<number> {
-  const ids = new Set<number>();
+export function prSessionIds(points: SessionPoint[]): Set<string> {
+  const ids = new Set<string>();
   let bestWeight = 0;
   let best1Rm = 0;
   for (const point of points) {

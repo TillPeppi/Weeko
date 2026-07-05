@@ -7,9 +7,23 @@ import { integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlit
 import type { BlockStatus, BlockType, MuscleGroup } from '@/domain/types';
 import type { Nutrients, NutritionGoalOverrides } from '@/domain/nutrition';
 
+/**
+ * Columns added to every synced table for cloud sync (docs/SYNC_CONCEPT.md).
+ * `user_id` = owner (null while local-only / signed out); `updated_at` = last
+ * write (last-write-wins). Both nullable and stamped by `auditInsert`/`touch`
+ * (src/db/audit.ts). PowerSync uses them once sync is activated; until then they
+ * are harmless extra columns. Factory (not a shared object) so each table gets
+ * its own fresh column builders.
+ */
+const syncCols = () => ({
+  userId: text('user_id'),
+  updatedAt: text('updated_at'),
+});
+
 /** Single-row table (id = 1): body data, goal, language, theme. */
 export const profile = sqliteTable('profile', {
   id: integer('id').primaryKey(),
+  userId: text('user_id'),
   heightCm: real('height_cm'),
   age: integer('age'),
   sex: text('sex', { enum: ['male', 'female', 'other'] }),
@@ -42,29 +56,32 @@ export const weeklyStructure = sqliteTable('weekly_structure', {
   /** "Tag meist fertig um" */
   doneBy: text('done_by'),
   fixedBlocks: text('fixed_blocks', { mode: 'json' }).$type<FixedBlockSeed[]>().notNull().default([]),
+  ...syncCols(),
 });
 
 export const equipment = sqliteTable('equipment', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
   available: integer('available', { mode: 'boolean' }).notNull().default(true),
+  ...syncCols(),
 });
 
 export const exercise = sqliteTable('exercise', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
-  equipmentId: integer('equipment_id').references(() => equipment.id, { onDelete: 'set null' }),
+  equipmentId: text('equipment_id').references(() => equipment.id, { onDelete: 'set null' }),
   isWeighted: integer('is_weighted', { mode: 'boolean' }).notNull().default(false),
   notes: text('notes'),
   /** stable key for built-in exercises (pictogram lookup, top-up seeding); null = user-created */
   slug: text('slug'),
   muscleGroup: text('muscle_group').$type<MuscleGroup>(),
+  ...syncCols(),
 });
 
 export const week = sqliteTable(
   'week',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: text('id').primaryKey(),
     year: integer('year').notNull(),
     isoWeek: integer('iso_week').notNull(),
     status: text('status', { enum: ['planned', 'active', 'archived'] })
@@ -74,13 +91,14 @@ export const week = sqliteTable(
       .notNull()
       .default('manual'),
     createdAt: text('created_at').notNull(),
+    ...syncCols(),
   },
   (t) => [uniqueIndex('week_year_iso_unique').on(t.year, t.isoWeek)]
 );
 
 export const block = sqliteTable('block', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  weekId: integer('week_id')
+  id: text('id').primaryKey(),
+  weekId: text('week_id')
     .notNull()
     .references(() => week.id, { onDelete: 'cascade' }),
   /** YYYY-MM-DD */
@@ -91,10 +109,11 @@ export const block = sqliteTable('block', {
   title: text('title').notNull(),
   details: text('details', { mode: 'json' }).$type<Record<string, unknown>>(),
   status: text('status').$type<BlockStatus>().notNull().default('planned'),
+  ...syncCols(),
 });
 
 export const task = sqliteTable('task', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),
   title: text('title').notNull(),
   category: text('category').notNull(),
   estimatedMinutes: integer('estimated_minutes'),
@@ -107,10 +126,11 @@ export const task = sqliteTable('task', {
   windowEnd: text('window_end'),
   /** Reserved for Phase 3 (location context) — stored, ignored in Phase 1. */
   context: text('context', { mode: 'json' }).$type<Record<string, unknown>>(),
-  blockId: integer('block_id').references(() => block.id, { onDelete: 'set null' }),
-  weekId: integer('week_id').references(() => week.id, { onDelete: 'set null' }),
+  blockId: text('block_id').references(() => block.id, { onDelete: 'set null' }),
+  weekId: text('week_id').references(() => week.id, { onDelete: 'set null' }),
   createdAt: text('created_at').notNull(),
   completedAt: text('completed_at'),
+  ...syncCols(),
 });
 
 export interface SessionTemplateItem {
@@ -121,18 +141,19 @@ export interface SessionTemplateItem {
 }
 
 export const sessionTemplate = sqliteTable('session_template', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),
   /** stable key referenced by imports: 'hyrox' | 'weighted-calisthenics' | 'upper-short' | custom */
   key: text('key').notNull().unique(),
   /** i18n key for built-ins, free text for user templates */
   nameKey: text('name_key').notNull(),
   items: text('items', { mode: 'json' }).$type<SessionTemplateItem[]>().notNull().default([]),
+  ...syncCols(),
 });
 
 export const workoutSession = sqliteTable('workout_session', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  blockId: integer('block_id').references(() => block.id, { onDelete: 'set null' }),
-  templateId: integer('template_id').references(() => sessionTemplate.id, {
+  id: text('id').primaryKey(),
+  blockId: text('block_id').references(() => block.id, { onDelete: 'set null' }),
+  templateId: text('template_id').references(() => sessionTemplate.id, {
     onDelete: 'set null',
   }),
   title: text('title').notNull(),
@@ -141,14 +162,15 @@ export const workoutSession = sqliteTable('workout_session', {
   status: text('status', { enum: ['active', 'done', 'aborted'] })
     .notNull()
     .default('active'),
+  ...syncCols(),
 });
 
 export const setLog = sqliteTable('set_log', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  sessionId: integer('session_id')
+  id: text('id').primaryKey(),
+  sessionId: text('session_id')
     .notNull()
     .references(() => workoutSession.id, { onDelete: 'cascade' }),
-  exerciseId: integer('exercise_id')
+  exerciseId: text('exercise_id')
     .notNull()
     .references(() => exercise.id, { onDelete: 'cascade' }),
   setIndex: integer('set_index').notNull(),
@@ -163,14 +185,16 @@ export const setLog = sqliteTable('set_log', {
    */
   supersetGroup: integer('superset_group'),
   createdAt: text('created_at').notNull(),
+  ...syncCols(),
 });
 
 export const weekTemplate = sqliteTable('week_template', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
   /** stored in the same shape as the import JSON (WeekImport, without week/dates) */
   data: text('data', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
   createdAt: text('created_at').notNull(),
+  ...syncCols(),
 });
 
 /**
@@ -200,7 +224,7 @@ export const foodProduct = sqliteTable('food_product', {
  * stays stable even if the cached product is refreshed later.
  */
 export const foodEntry = sqliteTable('food_entry', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),
   /** YYYY-MM-DD */
   date: text('date').notNull(),
   meal: text('meal', { enum: ['breakfast', 'lunch', 'dinner', 'snack'] })
@@ -212,6 +236,7 @@ export const foodEntry = sqliteTable('food_entry', {
   /** per 100 g snapshot */
   nutrients: text('nutrients', { mode: 'json' }).$type<Nutrients>().notNull(),
   createdAt: text('created_at').notNull(),
+  ...syncCols(),
 });
 
 /**
@@ -223,6 +248,7 @@ export const coachDismissal = sqliteTable('coach_dismissal', {
   id: text('id').primaryKey(),
   until: text('until'),
   createdAt: text('created_at').notNull(),
+  ...syncCols(),
 });
 
 export const notificationPref = sqliteTable('notification_pref', {
@@ -235,11 +261,12 @@ export const notificationPref = sqliteTable('notification_pref', {
   digestTime: text('digest_time'),
   /** Coach digest only: snooze window in minutes for dismissed warnings (null = default). */
   snoozeMinutes: integer('snooze_minutes'),
+  ...syncCols(),
 });
 
 /** Body composition tracking: weight + body fat percentage */
 export const bodyMeasurement = sqliteTable('body_measurement', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),
   /** YYYY-MM-DD */
   date: text('date').notNull(),
   /** weight in kg */
@@ -247,6 +274,7 @@ export const bodyMeasurement = sqliteTable('body_measurement', {
   /** optional body fat percentage (0–100) */
   fatPercent: real('fat_percent'),
   createdAt: text('created_at').notNull(),
+  ...syncCols(),
 });
 
 export type Profile = typeof profile.$inferSelect;

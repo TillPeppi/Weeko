@@ -22,10 +22,10 @@ interface TrainingState {
   refreshProgress: () => Promise<void>;
   start: (values: {
     title: string;
-    blockId?: number | null;
-    templateId?: number | null;
-  }) => Promise<number>;
-  finish: (id: number, aborted?: boolean) => Promise<void>;
+    blockId?: string | null;
+    templateId?: string | null;
+  }) => Promise<string>;
+  finish: (id: string, aborted?: boolean) => Promise<void>;
 }
 
 export const useTrainingStore = create<TrainingState>((set, get) => ({

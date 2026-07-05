@@ -26,6 +26,25 @@
     "error": "Error",
     "retry": "Retry"
   },
+  "auth": {
+    "welcomeTitle": "Welcome to Weeko",
+    "welcomeSubtitle": "Sign in to see your data across all your devices.",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 6 characters.",
+    "confirmEmailSent": "Almost there — confirm the link in your email, then sign in.",
+    "errors": {
+      "invalidCredentials": "Email or password is incorrect.",
+      "emailTaken": "An account already exists for this email.",
+      "weakPassword": "Password is too weak (at least 6 characters).",
+      "invalidEmail": "Please enter a valid email address.",
+      "network": "No connection. Check your network and try again.",
+      "notConfigured": "Sign-in is not set up yet.",
+      "generic": "Sign-in failed. Please try again."
+    }
+  },
   "tabs": {
     "week": "Week",
     "today": "Today",
@@ -397,7 +416,77 @@
       "month": "This month",
       "year": "This year",
       "legend": "{{count}} training days this year — every glowing dot is one day"
+    },
+    "import": {
+      "title": "Training import",
+      "subtitle": "Describe your workout to an AI (prompt below) and paste its JSON answer here — Weeko validates and shows a preview.",
+      "cta": "Import training (JSON)",
+      "pasteLabel": "Paste JSON",
+      "pastePlaceholder": "{ \"schemaVersion\": 1, … }",
+      "validate": "Validate & preview",
+      "errorsTitle": "The import contains errors",
+      "atSession": "Session {{session}}",
+      "atExercise": "Session {{session}}, exercise {{exercise}}",
+      "atSet": "Session {{session}}, exercise {{exercise}}, set {{set}}",
+      "prompt": {
+        "title": "Prompt for your AI",
+        "hint": "Copy the prompt, append your workout description and paste the JSON answer above.",
+        "copy": "Copy prompt",
+        "copied": "Prompt copied",
+        "shared": "Prompt shared",
+        "failed": "Copying not possible — please select manually.",
+        "intro": "You convert my workout description into JSON for the app Weeko. I will describe one or more completed training sessions in free text. Reply ONLY with valid JSON following exactly this schema — no explanations, no markdown code block:",
+        "rules": "Rules:\n- Date as YYYY-MM-DD (today is {{date}}), time as HH:mm (24h).\n- \"weightKg\" is the added weight for calisthenics, otherwise the total weight moved; pure bodyweight sets carry only \"reps\".\n- Only include \"start\" and \"durationMinutes\" if I mention them.\n- The equipment does NOT belong in the exercise name — put it in the optional \"equipment\" field (e.g. \"Cable\", \"Dumbbell\", \"Machine\"). Prefer these equipment names: {{equipment}}.\n- Prefer these exact exercise names (without equipment in the name): {{exercises}}.\n- Exercises or equipment outside the lists get a short, clear name (they will be created).\n- Cardio/mobility exercises with no countable sets get \"sets\": [].\n\nHere is my training description:"
+      },
+      "preview": {
+        "title": "Preview",
+        "summary": "{{sessions}} session(s) · {{sets}} sets",
+        "newExercise": "will be created",
+        "newExercisesHint": "Unknown exercises will be created: {{names}}",
+        "apply": "Import training",
+        "noSets": "no sets"
+      },
+      "errors": {
+        "invalidJson": "This is not valid JSON.",
+        "unsupportedVersion": "Unsupported schema version (expected 1).",
+        "noSessions": "The import contains no sessions.",
+        "tooManySessions": "More than 50 sessions provided.",
+        "invalidDate": "Invalid date (expected YYYY-MM-DD).",
+        "invalidTime": "Invalid time (expected HH:mm).",
+        "invalidDuration": "Invalid duration (whole minutes).",
+        "missingTitle": "Title is missing.",
+        "noExercises": "Session without exercises.",
+        "missingExerciseName": "Exercise name is missing.",
+        "noSets": "Exercise without sets.",
+        "invalidReps": "Invalid rep count.",
+        "invalidWeight": "Invalid weight.",
+        "missingOrWrongType": "Field is missing or has the wrong type.",
+        "invalidValue": "Invalid value.",
+        "unknownField": "Unknown field.",
+        "generic": "Invalid input."
+      }
     }
+  },
+  "export": {
+    "title": "Analysis export",
+    "subtitle": "All data of a period as JSON — paste it into Claude & co. for an analysis.",
+    "week": "Week",
+    "month": "Month",
+    "summaryTitle": "Included data",
+    "blocks": "{{count}} plan blocks",
+    "sessions": "{{count}} training sessions",
+    "foodDays": "{{count}} days with food entries",
+    "measurements": "{{count}} weight measurements",
+    "tasks": "{{count}} tasks",
+    "healthDays": "{{count}} days with health data (sleep etc.)",
+    "healthWebHint": "Sleep/health data comes from Apple Health and is only included in the iOS app.",
+    "empty": "No data available for this period.",
+    "copyWithPrompt": "Copy with analysis prompt",
+    "copyJson": "Copy JSON only",
+    "copied": "Copied — paste it into Claude",
+    "shared": "Shared",
+    "failed": "Copying not possible — please try again.",
+    "prompt": "You are my training and health coach. Analyze my data from the tracking app Weeko for {{label}} ({{start}} to {{end}}). The data contains the weekly plan (blocks with status), training (sets as [reps, kg], kg = added weight for weighted calisthenics), nutrition per day, body weight and possibly sleep/health metrics (sleep in minutes).\n\nGive me:\n1. The most important observations on training, nutrition, sleep and weight.\n2. Connections between the areas (e.g. sleep vs. training performance, calories vs. weight trend).\n3. Concrete, prioritized recommendations for the next period.\nBe honest and specific — no platitudes.\n\nData:"
   },
   "stats": {
     "title": "Statistics",
@@ -539,12 +628,18 @@
     "exercisesSection": "Equipment & exercises",
     "data": {
       "title": "Data",
+      "analysisExport": "Analysis export (week/month)",
       "export": "Export data (JSON)",
       "exportDone": "Export created",
       "deleteAll": "Delete all data",
       "deleteConfirmTitle": "Really delete everything?",
       "deleteConfirmMessage": "All weeks, tasks, workouts and settings will be permanently deleted.",
       "deleted": "All data deleted"
+    },
+    "account": {
+      "title": "Account",
+      "signedInAs": "Signed in as",
+      "signOut": "Sign out"
     },
     "rerunOnboarding": "Run setup again",
     "about": "Weeko — local, offline, your data stays on your device.",

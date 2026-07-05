@@ -144,7 +144,7 @@ export async function scheduleTaskNotifications(task: Task): Promise<void> {
   }
 }
 
-export async function cancelTaskNotifications(taskId: number): Promise<void> {
+export async function cancelTaskNotifications(taskId: string): Promise<void> {
   if (isWeb) return;
   await cancelByPrefix(`task-${taskId}-`);
 }

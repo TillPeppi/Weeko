@@ -18,9 +18,9 @@ import { ExercisePictogram } from './ExercisePictogram';
 interface Props {
   exercises: Exercise[];
   /** already part of the session — hidden from the list */
-  excludeIds: number[];
+  excludeIds: string[];
   /** current session, excluded from "last time" lookups */
-  sessionId: number;
+  sessionId: string;
   onPick: (exercise: Exercise) => void;
 }
 
@@ -32,13 +32,13 @@ export function ExercisePicker({ exercises, excludeIds, sessionId, onPick }: Pro
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const [query, setQuery] = useState('');
-  const [summaries, setSummaries] = useState<Map<number, string>>(new Map());
+  const [summaries, setSummaries] = useState<Map<string, string>>(new Map());
 
   // "last time" lines, loaded once per exercise set (local SQLite, cheap)
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const next = new Map<number, string>();
+      const next = new Map<string, string>();
       for (const exercise of exercises) {
         const sets = await lastSetsForExercise(exercise.id, sessionId);
         if (sets.length === 0) continue;

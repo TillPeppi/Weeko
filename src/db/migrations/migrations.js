@@ -11,6 +11,8 @@ import m0006 from './0006_zippy_archangel.sql';
 import m0007 from './0007_tough_xavin.sql';
 import m0008 from './0008_awesome_mattie_franklin.sql';
 import m0009 from './0009_body_measurement.sql';
+import m0010 from './0010_flowery_leader.sql';
+import m0011 from './0011_gray_kinsey_walden.sql';
 
   export default {
     journal,
@@ -24,7 +26,9 @@ m0005,
 m0006,
 m0007,
 m0008,
-m0009
+m0009,
+m0010,
+m0011
     }
   }
   

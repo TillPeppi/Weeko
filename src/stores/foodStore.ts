@@ -60,8 +60,8 @@ interface FoodState {
     /** per 100 g */
     nutrients: Nutrients;
   }) => Promise<void>;
-  update: (id: number, values: { amountG: number; meal: MealType }) => Promise<void>;
-  remove: (id: number) => Promise<void>;
+  update: (id: string, values: { amountG: number; meal: MealType }) => Promise<void>;
+  remove: (id: string) => Promise<void>;
 }
 
 function totalsOf(entries: FoodEntry[]): Nutrients {

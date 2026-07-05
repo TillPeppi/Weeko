@@ -40,14 +40,14 @@ import { useTrainingStore } from '@/stores/trainingStore';
 const REST_SECONDS = 90;
 
 interface SetDraft {
-  id?: number;
+  id?: string;
   reps: string;
   weightKg: string;
   done: boolean;
 }
 
 interface ExerciseSection {
-  exerciseId: number;
+  exerciseId: string;
   name: string;
   slug: string | null;
   isWeighted: boolean;
@@ -62,7 +62,7 @@ export default function SessionScreen() {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const params = useLocalSearchParams<{ id: string }>();
-  const sessionId = Number(params.id);
+  const sessionId = params.id;
   const training = useTrainingStore();
 
   const [session, setSession] = useState<WorkoutSession | null>(null);
@@ -158,7 +158,7 @@ export default function SessionScreen() {
       setSession(loaded);
       setExercises(allExercises);
 
-      const byExercise = new Map<number, SetLog[]>();
+      const byExercise = new Map<string, SetLog[]>();
       for (const log of logs) {
         const list = byExercise.get(log.exerciseId) ?? [];
         list.push(log);

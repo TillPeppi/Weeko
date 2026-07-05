@@ -22,7 +22,7 @@ interface WeekState {
   loading: boolean;
   setWeek: (year: number, isoWeek: number) => void;
   refresh: () => Promise<void>;
-  setBlockStatus: (blockId: number, status: BlockStatus) => Promise<void>;
+  setBlockStatus: (blockId: string, status: BlockStatus) => Promise<void>;
 }
 
 function todayIso(): string {

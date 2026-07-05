@@ -18,10 +18,10 @@ interface TaskState {
   loading: boolean;
   refresh: () => Promise<void>;
   add: (values: Parameters<typeof createTask>[0]) => Promise<void>;
-  update: (id: number, values: Parameters<typeof updateTask>[1]) => Promise<void>;
-  complete: (id: number) => Promise<void>;
-  reopen: (id: number) => Promise<void>;
-  remove: (id: number) => Promise<void>;
+  update: (id: string, values: Parameters<typeof updateTask>[1]) => Promise<void>;
+  complete: (id: string) => Promise<void>;
+  reopen: (id: string) => Promise<void>;
+  remove: (id: string) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({

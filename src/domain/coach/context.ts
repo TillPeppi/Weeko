@@ -26,8 +26,8 @@ export interface BlockLike {
 
 /** A logged set from a finished session (matches trainingRepo.StatsSetRow). */
 export interface TrainingSetLike {
-  sessionId: number;
-  exerciseId: number;
+  sessionId: string;
+  exerciseId: string;
   /** YYYY-MM-DD of the session */
   date: string;
   reps: number | null;
@@ -50,7 +50,7 @@ export interface CoachContext {
   /** logged sets from finished sessions (progression & load rules) */
   trainingSets: TrainingSetLike[];
   /** exercise id → display name (for progression insights) */
-  exerciseNames: Record<number, string>;
+  exerciseNames: Record<string, string>;
   /** today's health signals from the HealthKit adapter */
   health: ReadinessInput;
   /** personal rolling baselines (optional; generic references otherwise) */

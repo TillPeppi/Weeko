@@ -26,6 +26,25 @@
     "error": "Fehler",
     "retry": "Erneut versuchen"
   },
+  "auth": {
+    "welcomeTitle": "Willkommen bei Weeko",
+    "welcomeSubtitle": "Melde dich an, um deine Daten auf allen Geräten zu sehen.",
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "passwordHint": "Mindestens 6 Zeichen.",
+    "confirmEmailSent": "Fast geschafft — bestätige den Link in deiner E-Mail und melde dich dann an.",
+    "errors": {
+      "invalidCredentials": "E-Mail oder Passwort ist falsch.",
+      "emailTaken": "Für diese E-Mail gibt es bereits ein Konto.",
+      "weakPassword": "Das Passwort ist zu schwach (mindestens 6 Zeichen).",
+      "invalidEmail": "Bitte gib eine gültige E-Mail-Adresse ein.",
+      "network": "Keine Verbindung. Prüfe dein Netzwerk und versuche es erneut.",
+      "notConfigured": "Anmeldung ist noch nicht eingerichtet.",
+      "generic": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
+    }
+  },
   "tabs": {
     "week": "Woche",
     "today": "Heute",
@@ -397,7 +416,77 @@
       "month": "Dieser Monat",
       "year": "Dieses Jahr",
       "legend": "{{count}} Trainingstage in diesem Jahr — jeder leuchtende Punkt ist ein Tag"
+    },
+    "import": {
+      "title": "Trainings-Import",
+      "subtitle": "Beschreibe dein Training einer KI (Prompt unten) und füge ihre JSON-Antwort hier ein — Weeko validiert und zeigt eine Vorschau.",
+      "cta": "Training importieren (JSON)",
+      "pasteLabel": "JSON einfügen",
+      "pastePlaceholder": "{ \"schemaVersion\": 1, … }",
+      "validate": "Prüfen & Vorschau",
+      "errorsTitle": "Der Import enthält Fehler",
+      "atSession": "Session {{session}}",
+      "atExercise": "Session {{session}}, Übung {{exercise}}",
+      "atSet": "Session {{session}}, Übung {{exercise}}, Satz {{set}}",
+      "prompt": {
+        "title": "Prompt für deine KI",
+        "hint": "Prompt kopieren, deine Trainings-Beschreibung anhängen und die JSON-Antwort oben einfügen.",
+        "copy": "Prompt kopieren",
+        "copied": "Prompt kopiert",
+        "shared": "Prompt geteilt",
+        "failed": "Kopieren nicht möglich — bitte manuell markieren.",
+        "intro": "Du wandelst meine Trainings-Beschreibung in JSON für die App Weeko um. Ich beschreibe dir eine oder mehrere abgeschlossene Trainingseinheiten in freiem Text. Antworte NUR mit gültigem JSON nach exakt diesem Schema — keine Erklärungen, kein Markdown-Codeblock:",
+        "rules": "Regeln:\n- Datum als JJJJ-MM-TT (heute ist der {{date}}), Uhrzeit als HH:mm (24 h).\n- \"weightKg\" ist das Zusatzgewicht bei Calisthenics, sonst das bewegte Gesamtgewicht; reine Körpergewicht-Sätze haben nur \"reps\".\n- \"start\" und \"durationMinutes\" nur angeben, wenn ich sie nenne.\n- Das Gerät gehört NICHT in den Übungsnamen, sondern in das optionale Feld \"equipment\" (z. B. \"Kabel\", \"Kurzhantel\", \"Maschine\"). Nutze möglichst diese Geräte: {{equipment}}.\n- Nutze möglichst exakt diese Übungsnamen (ohne Gerät im Namen): {{exercises}}.\n- Übungen oder Geräte außerhalb der Listen bekommen einen kurzen, klaren Namen (sie werden neu angelegt).\n- Cardio-/Mobility-Übungen ohne zählbare Sätze bekommen \"sets\": [].\n\nHier ist meine Trainings-Beschreibung:"
+      },
+      "preview": {
+        "title": "Vorschau",
+        "summary": "{{sessions}} Session(s) · {{sets}} Sätze",
+        "newExercise": "wird angelegt",
+        "newExercisesHint": "Noch unbekannte Übungen werden neu angelegt: {{names}}",
+        "apply": "Training übernehmen",
+        "noSets": "ohne Sätze"
+      },
+      "errors": {
+        "invalidJson": "Das ist kein gültiges JSON.",
+        "unsupportedVersion": "Nicht unterstützte Schema-Version (erwartet 1).",
+        "noSessions": "Der Import enthält keine Sessions.",
+        "tooManySessions": "Mehr als 50 Sessions angegeben.",
+        "invalidDate": "Ungültiges Datum (erwartet JJJJ-MM-TT).",
+        "invalidTime": "Ungültige Uhrzeit (erwartet HH:mm).",
+        "invalidDuration": "Ungültige Dauer (Minuten, ganzzahlig).",
+        "missingTitle": "Titel fehlt.",
+        "noExercises": "Session ohne Übungen.",
+        "missingExerciseName": "Übungsname fehlt.",
+        "noSets": "Übung ohne Sätze.",
+        "invalidReps": "Ungültige Wiederholungszahl.",
+        "invalidWeight": "Ungültiges Gewicht.",
+        "missingOrWrongType": "Feld fehlt oder hat den falschen Typ.",
+        "invalidValue": "Ungültiger Wert.",
+        "unknownField": "Unbekanntes Feld.",
+        "generic": "Ungültige Eingabe."
+      }
     }
+  },
+  "export": {
+    "title": "Analyse-Export",
+    "subtitle": "Alle Daten eines Zeitraums als JSON — zum Einfügen in Claude & Co. für eine Analyse.",
+    "week": "Woche",
+    "month": "Monat",
+    "summaryTitle": "Enthaltene Daten",
+    "blocks": "{{count}} Plan-Blöcke",
+    "sessions": "{{count}} Trainings-Sessions",
+    "foodDays": "{{count}} Tage mit Ernährungseinträgen",
+    "measurements": "{{count}} Gewichtsmessungen",
+    "tasks": "{{count}} Aufgaben",
+    "healthDays": "{{count}} Tage mit Health-Daten (Schlaf etc.)",
+    "healthWebHint": "Schlaf-/Health-Daten kommen aus Apple Health und sind nur in der iOS-App enthalten.",
+    "empty": "Für diesen Zeitraum sind keine Daten vorhanden.",
+    "copyWithPrompt": "Mit Analyse-Prompt kopieren",
+    "copyJson": "Nur JSON kopieren",
+    "copied": "Kopiert — jetzt in Claude einfügen",
+    "shared": "Geteilt",
+    "failed": "Kopieren nicht möglich — bitte erneut versuchen.",
+    "prompt": "Du bist mein Trainings- und Gesundheits-Coach. Analysiere meine Daten aus der Tracking-App Weeko für {{label}} ({{start}} bis {{end}}). Die Daten enthalten Wochenplan (Blöcke mit Status), Training (Sätze als [Wdh, kg], kg = Zusatzgewicht bei Calisthenics), Ernährung pro Tag, Körpergewicht und ggf. Schlaf-/Health-Metriken (Schlaf in Minuten).\n\nGib mir:\n1. Die wichtigsten Beobachtungen zu Training, Ernährung, Schlaf und Gewicht.\n2. Zusammenhänge zwischen den Bereichen (z. B. Schlaf vs. Trainingsleistung, Kalorien vs. Gewichtstrend).\n3. Konkrete, priorisierte Empfehlungen für den nächsten Zeitraum.\nSei ehrlich und spezifisch — keine Allgemeinplätze.\n\nDaten:"
   },
   "stats": {
     "title": "Statistik",
@@ -539,12 +628,18 @@
     "exercisesSection": "Equipment & Übungen",
     "data": {
       "title": "Daten",
+      "analysisExport": "Analyse-Export (Woche/Monat)",
       "export": "Daten exportieren (JSON)",
       "exportDone": "Export erstellt",
       "deleteAll": "Alle Daten löschen",
       "deleteConfirmTitle": "Wirklich alles löschen?",
       "deleteConfirmMessage": "Alle Wochen, Aufgaben, Trainings und Einstellungen werden unwiderruflich gelöscht.",
       "deleted": "Alle Daten gelöscht"
+    },
+    "account": {
+      "title": "Konto",
+      "signedInAs": "Angemeldet als",
+      "signOut": "Abmelden"
     },
     "rerunOnboarding": "Einrichtung erneut durchlaufen",
     "about": "Weeko — lokal, offline, deine Daten bleiben auf dem Gerät.",

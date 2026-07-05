@@ -13,7 +13,7 @@ const row = (
   reps: number | null,
   weightKg: number | null,
   done = true
-): ExerciseSetRow => ({ sessionId, date, reps, weightKg, done });
+): ExerciseSetRow => ({ sessionId: String(sessionId), date, reps, weightKg, done });
 
 describe('epley1Rm', () => {
   it('estimates 1RM via Epley', () => {
@@ -31,7 +31,7 @@ describe('exerciseProgression', () => {
       row(1, '2026-06-26', 8, null), // bodyweight set: reps count, no volume
       row(1, '2026-06-26', 5, 15, false), // not checked off — ignored
     ]);
-    expect(points.map((p) => p.sessionId)).toEqual([1, 2]);
+    expect(points.map((p) => p.sessionId)).toEqual(['1', '2']);
     expect(points[0]).toMatchObject({
       maxWeightKg: 10,
       volumeKg: 80,
@@ -72,7 +72,7 @@ describe('exercisePrs / prSessionIds', () => {
   });
 
   it('marks sessions that set a new record at the time', () => {
-    expect(prSessionIds(points)).toEqual(new Set([1, 2, 4]));
+    expect(prSessionIds(points)).toEqual(new Set(['1', '2', '4']));
   });
 
   it('handles empty input', () => {

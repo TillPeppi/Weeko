@@ -36,7 +36,14 @@ const weighted = (
   sessionId: number,
   date: string,
   weightKg: number
-): TrainingSetLike => ({ exerciseId, sessionId, date, reps: 1, weightKg, done: true });
+): TrainingSetLike => ({
+  exerciseId: String(exerciseId),
+  sessionId: String(sessionId),
+  date,
+  reps: 1,
+  weightKg,
+  done: true,
+});
 
 const ctx = (overrides: Partial<CoachContext> = {}): CoachContext => ({
   now: new Date('2026-07-08T07:00:00'),

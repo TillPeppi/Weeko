@@ -1,6 +1,135 @@
 # Weeko — Fortschritt
 
-> Nach jeder Session aktualisieren. Stand: **2026-07-05** (Session 1: Phase-1-Aufbau; Session 2: Design-Richtung "Dark Focus"; Session 3: Dark Focus auf alle Screens ausgerollt; Session 4: Essenstracker; Session 5: Swipe/Animationen/Wochenbilanz/Essenstracker-Ausbau; Session 7: Statistik-Screen; Session 8: Redesign "Neo Brutal"; Session 9: Coach-Engine — regelbasierte „KI"; Session 10: Körper-Level / Strain / Schlafbedarf / HRV-Verlauf — Bevel-Kernkompetenz; Session 11: Supersätze; Session 12: Übungskatalog + Piktogramme + freie Session; Session 13: Waage + erweiterte Stats).
+> Nach jeder Session aktualisieren. Stand: **2026-07-05** (Session 17: Sync-Schritt 4 — PowerSync-Scaffold + lokale Prep; Session 16: Accounts/Auth — Supabase-Login; Session 15: Sync-Vorbereitung — Text-UUID-PKs; Session 1: Phase-1-Aufbau; Session 2: Design-Richtung "Dark Focus"; Session 3: Dark Focus auf alle Screens ausgerollt; Session 4: Essenstracker; Session 5: Swipe/Animationen/Wochenbilanz/Essenstracker-Ausbau; Session 7: Statistik-Screen; Session 8: Redesign "Neo Brutal"; Session 9: Coach-Engine — regelbasierte „KI"; Session 10: Körper-Level / Strain / Schlafbedarf / HRV-Verlauf — Bevel-Kernkompetenz; Session 11: Supersätze; Session 12: Übungskatalog + Piktogramme + freie Session; Session 13: Waage + erweiterte Stats; Session 14: Trainings-Import per KI-Prompt + Analyse-Export).
+
+## 🔄 Session 17 — Sync-Schritt 4: lokale Prep + PowerSync-Scaffold (nicht verdrahtet)
+
+Additiver Scaffold — die App läuft unverändert auf expo-sqlite weiter. Aktivierung:
+[POWERSYNC_SETUP.md](./POWERSYNC_SETUP.md).
+
+- **Lokale Prep (verifiziert):** `user_id` + `updated_at` (nullable) auf allen
+  Sync-Tabellen via Factory `syncCols()` in [schema.ts](../src/db/schema.ts); additive
+  Migration **`0011`** (29× ADD COLUMN, keine Tabellen-Neuanlage → kein Datenverlust).
+  `src/db/audit.ts` (`auditInsert()`/`touch()`) stampt Owner+Timestamp; INSERTS in den
+  Daten-Repos (week/task/food/body/training/exercise) gestampt. Config-Tabellen
+  (profile/structure/notification/coach) + Update-Stamping bleiben Aktivierungs-Arbeit.
+- **PowerSync-Scaffold (typecheck-grün, NICHT importiert):** `src/db/powersync/` —
+  `schema.ts` (`DrizzleAppSchema` aus den Drizzle-Tabellen), `connector.ts`
+  (`SupabaseConnector`: fetchCredentials + uploadData/CRUD-Queue), `factory.ts`/`.web.ts`
+  (RN-Native bzw. wa-sqlite/OPFS), `system.ts` (`getSyncDb()`/`connectSync()`).
+  `powersync/sync-rules.yaml` (pro-Nutzer-Buckets). Deps: `@powersync/react-native`,
+  `@powersync/web`, `@powersync/drizzle-driver`, `@powersync/react`.
+- **Verifiziert:** Typecheck grün, 196 Tests grün; Web bootet unverändert local-only
+  (Migration 0011 sauber, gestampte Seeds ok, keine Konsolenfehler); nichts importiert
+  den Scaffold → App unbeeinflusst.
+- **Offen (braucht Backend + Dev-Build):** PowerSync-Cloud-Instanz, DB-Client-Swap auf
+  `getSyncDb()`, `migrate()` ersetzen, Config-Tabellen mit text-`id`, Daten-Claim.
+
+## 🔐 Session 16 — Accounts/Auth (Sync-Schritt 2+3): Supabase-Login
+
+Login per E-Mail + Passwort (Konzept: [SYNC_CONCEPT.md](./SYNC_CONCEPT.md) §6, Anleitung:
+[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)). **Noch kein Sync** — Daten bleiben lokal; das
+ist die Identitäts-Grundlage für PowerSync (Schritt 4).
+
+- **Deps:** `@supabase/supabase-js`, `@react-native-async-storage/async-storage`,
+  `react-native-url-polyfill`.
+- **`src/auth/supabase.ts`:** Client aus `EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY`. **Lazy**
+  (`getSupabase()`) — `createClient` darf nicht im Node-Static-Render laufen
+  (`web.output: static`), sonst „Node.js detected without WebSocket"-Fehler (SSR-500).
+  `isAuthConfigured` = false ohne Env → App läuft wie bisher **lokal, ohne Login-Gate**.
+- **`src/stores/authStore.ts`:** Session + `signIn`/`signUp`/`signOut`/`hydrate`
+  (+ `onAuthStateChange`), Fehler als i18n-Keys.
+- **`src/app/login.tsx`:** E-Mail+Passwort, Anmelden/Registrieren-Umschalter, Validierung,
+  Fehler-/Bestätigungs-Hinweise (i18n de+en).
+- **Gate** im Root-`_layout.tsx` (nur bei konfiguriertem Supabase; sonst No-op) +
+  Login-Route; **Logout** in Settings → Konto.
+- **`supabase/schema.sql`:** Postgres-Spiegel + RLS (`user_id = auth.uid()`) — vorbereitet
+  für Schritt 4, für reinen Login nicht nötig.
+- **Verifiziert:** Typecheck grün, 196 Tests grün (inkl. Locale-Parity). Web: local-only
+  bootet unverändert (kein Gate, Account-Karte versteckt); mit Env → Gate leitet auf
+  `/login`, Login-Screen rendert vollständig, keine Konsolenfehler, SSR sauber (200).
+- **Offen (Nutzer):** Supabase-Projekt anlegen + E-Mail-Provider + `.env` (SUPABASE_SETUP.md).
+  Danach Schritt 4 (PowerSync): `userId`/`updatedAt` lokal, Sync-Rules, `useQuery`.
+
+## 🔑 Session 15 — Sync-Vorbereitung Schritt 1: Text-UUID-Primärschlüssel
+
+Erster Baustein Richtung Accounts/Cloud-Sync (Konzept: [SYNC_CONCEPT.md](./SYNC_CONCEPT.md)).
+Der harte, schwer nachrüstbare Teil — global eindeutige IDs — ist erledigt; die App
+funktioniert unverändert.
+
+- **`src/db/id.ts` (`newId()`):** UUID v4 via `crypto.randomUUID()` + RFC-4122-Fallback
+  (kein Native-Modul, Web + Hermes). IDs werden in den Repos beim Insert gesetzt (Schema
+  bleibt importfrei, damit drizzle-kit nicht bricht).
+- **Schema:** alle ehemaligen `integer autoIncrement`-PKs → `text` (equipment, exercise,
+  week, block, task, session_template, workout_session, set_log, week_template, food_entry,
+  body_measurement) + FK-Spalten auf `text`. Natürliche Schlüssel (profile, weekly_structure,
+  notification_pref, coach_dismissal, food_product) unverändert. `supersetGroup`/`setIndex`/
+  Session-Index bleiben `number`. Migration **`0010_flowery_leader`** (Tabellen-Neuanlage,
+  Daten bleiben erhalten).
+- **Ripple:** alle `number`-IDs in Repos/Stores/Domain (exerciseStats, trainingStats,
+  coach) + UI (`session/[id]` liest `params.id` jetzt als String statt `Number(...)`,
+  ExercisePicker, tasks/food/training) auf `string` umgestellt; Notification-Prefix
+  `cancelTaskNotifications` nimmt `string`.
+- **Verifiziert:** `npm run typecheck` grün; 193/194 Tests grün (der eine Fehlschlag gehört
+  zum parallel laufenden Trainings-Import-Feature, nicht zum Sync); Web-App bootet, migriert
+  sauber und eine frische Session bekommt eine UUID-Route (`/session/<uuid>`).
+- **Offen (nächste Schritte):** Supabase-Projekt + Auth, `userId`/`updatedAt` + RLS,
+  PowerSync-Integration. `deletedAt` entfällt (PowerSync propagiert Deletes selbst).
+
+## 📥 Session 14 — Trainings-Import (KI-Prompt → JSON) + Analyse-Export (Woche/Monat)
+
+Zwei neue LLM-Brücken: Training rein (freier Text → JSON → Import) und alle
+Daten raus (Woche/Monat als JSON + Analyse-Prompt für Claude & Co.).
+
+- **Trainings-Import (`src/app/training-import.tsx`, Modal, Button im
+  Training-Tab):** Der Screen zeigt einen **kopierbaren KI-Prompt** (Intro +
+  JSON-Beispiel + Regeln inkl. Live-Übungsliste aus der DB und heutigem Datum,
+  Prompt-Prosa über i18n) — Beschreibung ans LLM anhängen, JSON-Antwort
+  einfügen, „Prüfen & Vorschau“.
+  - **Schema `src/schemas/trainingImport.ts`** (Zod, i18n-Fehlerkeys
+    `training.import.errors.*`): `{ schemaVersion: 1, sessions: [{ date,
+    start?, durationMinutes?, title, exercises: [{ name, sets: [{ reps?,
+    weightKg? }] }] }] }` (max. 50 Sessions; Bodyweight-Sätze nur `reps`).
+  - **`domain/parseTrainingImport.ts`** (+ 8 Tests): Parse + Issue-Mapping mit
+    1-basierten Positionen („Session 2, Übung 1, Satz 3: …“); exportiert auch
+    das Prompt-JSON-Beispiel (validiert per Test gegen das Schema).
+  - **Repo:** `unknownImportExercises()` (Vorschau-Badge „wird angelegt“) und
+    `importTrainingSessions()` (Transaktion): fehlende Übungen werden angelegt
+    (isWeighted, wenn ein Satz Gewicht trägt), pro Session ein
+    `workout_session` mit Status `done` (startedAt = lokales
+    `YYYY-MM-DDTHH:mm:00`, Default 12:00; endedAt aus durationMinutes), alle
+    Sätze als erledigte `set_log`-Zeilen.
+- **Analyse-Export (`src/app/export.tsx`, Stack-Screen, Button in Settings →
+  Daten):** SegmentedControl **Woche/Monat** + ‹/›-Navigation (Zukunft
+  gesperrt). Karte „Enthaltene Daten“ (Blöcke/Sessions/Ernährungstage/
+  Messungen/Aufgaben/Health-Tage), zwei Buttons: **„Mit Analyse-Prompt
+  kopieren“** (Coach-Prompt aus i18n + JSON) und **„Nur JSON kopieren“**.
+  - **`domain/analysisExport.ts`** (+ 5 Tests): `buildAnalysisExport()` formt
+    kompaktes JSON — range, profile, nutritionTargetsPerDay, plan (Blöcke +
+    adherence), tasks, training (Sessions mit `volumeKg`, Sätze als
+    `[reps, kg]`-Tupel), nutrition (Tages-Aggregation via scale/sumNutrients),
+    body, health; **leere Sektionen werden weggelassen** (Health-Tage ohne
+    Werte gefiltert — Web hat nie welche, Hinweis im UI).
+  - **`dataRepo.collectAnalysisRange(start, end)`**: Blöcke/Tasks (erledigt im
+    Zeitraum + alle offenen)/Sessions mit Sätzen (Insertion-Order =
+    Trainingsreihenfolge)/Food-Entries/Messungen; Health via
+    `loadHealthRange` nur bei `healthSupported()` (iOS).
+- **`utils/copyText.ts`:** Web = `navigator.clipboard` mit
+  `execCommand`-Fallback, nativ = Share-Sheet (kein expo-clipboard nötig,
+  kein neuer Dev-Build); wirft nie — Outcome `copied|shared|failed` steuert
+  die Flash-Meldung.
+- **i18n:** `training.import.*` (Prompt, Vorschau, 17 Fehlerkeys) +
+  `export.*` + `settings.data.analysisExport` (de/en, Parity grün).
+
+**Verifikation:** 194 Vitest-Tests grün (13 neue), `typecheck` sauber.
+**Web (Chrome, verifiziert):** Import-Flow komplett (Prompt kopiert mit
+Übungsliste + heutigem Datum; kaputtes JSON → lokalisierte Fehler mit
+Position; valide 2-Session-Payload → Vorschau mit „wird angelegt“-Badges →
+Übernahme → Verlauf/Dashboard zeigen beide Sessions mit Datum/Uhrzeit/Dauer);
+Export-Flow komplett (KW 27 erkennt 2 Sessions, Monats-Modus + ‹-Navigation,
+kopierter Text = Prompt + JSON mit korrektem `volumeKg` 235 und Set-Tupeln,
+leere Sektionen fehlen); 320 px ohne Overflow. **iOS (Share-Sheet-Pfad) noch
+nicht getestet.**
 
 ## 🏋️ Session 13 — Waage + erweiterte Statistiken (alle Features)
 

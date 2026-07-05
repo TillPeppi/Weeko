@@ -33,12 +33,12 @@ describe('trainingStats extended', () => {
     it('ignores first session, counts from 2nd onwards', () => {
       const sets = [
         // Exercise 1: 1st session
-        { exerciseId: 1, exerciseName: 'Bench Press', sessionIndex: 1, reps: 8, weightKg: 80, done: true },
+        { exerciseId: '1', exerciseName: 'Bench Press', sessionIndex: 1, reps: 8, weightKg: 80, done: true },
         // Exercise 1: 2nd session
-        { exerciseId: 1, exerciseName: 'Bench Press', sessionIndex: 2, reps: 8, weightKg: 85, done: true },
-        { exerciseId: 1, exerciseName: 'Bench Press', sessionIndex: 2, reps: 6, weightKg: 85, done: true },
+        { exerciseId: '1', exerciseName: 'Bench Press', sessionIndex: 2, reps: 8, weightKg: 85, done: true },
+        { exerciseId: '1', exerciseName: 'Bench Press', sessionIndex: 2, reps: 6, weightKg: 85, done: true },
         // Exercise 1: 3rd session
-        { exerciseId: 1, exerciseName: 'Bench Press', sessionIndex: 3, reps: 10, weightKg: 87, done: true },
+        { exerciseId: '1', exerciseName: 'Bench Press', sessionIndex: 3, reps: 10, weightKg: 87, done: true },
       ];
       const gains = exerciseWeightGains(sets);
       expect(gains).toHaveLength(1);
@@ -56,13 +56,13 @@ describe('trainingStats extended', () => {
     it('multiple exercises', () => {
       const sets = [
         // Squat: 1st (ignored), 2nd, 3rd
-        { exerciseId: 1, exerciseName: 'Squat', sessionIndex: 1, reps: 5, weightKg: 100, done: true },
-        { exerciseId: 1, exerciseName: 'Squat', sessionIndex: 2, reps: 5, weightKg: 105, done: true },
-        { exerciseId: 1, exerciseName: 'Squat', sessionIndex: 3, reps: 5, weightKg: 110, done: true },
+        { exerciseId: '1', exerciseName: 'Squat', sessionIndex: 1, reps: 5, weightKg: 100, done: true },
+        { exerciseId: '1', exerciseName: 'Squat', sessionIndex: 2, reps: 5, weightKg: 105, done: true },
+        { exerciseId: '1', exerciseName: 'Squat', sessionIndex: 3, reps: 5, weightKg: 110, done: true },
         // Deadlift: 1st (ignored), 2nd, 3rd
-        { exerciseId: 2, exerciseName: 'Deadlift', sessionIndex: 1, reps: 3, weightKg: 140, done: true },
-        { exerciseId: 2, exerciseName: 'Deadlift', sessionIndex: 2, reps: 3, weightKg: 145, done: true },
-        { exerciseId: 2, exerciseName: 'Deadlift', sessionIndex: 3, reps: 3, weightKg: 150, done: true },
+        { exerciseId: '2', exerciseName: 'Deadlift', sessionIndex: 1, reps: 3, weightKg: 140, done: true },
+        { exerciseId: '2', exerciseName: 'Deadlift', sessionIndex: 2, reps: 3, weightKg: 145, done: true },
+        { exerciseId: '2', exerciseName: 'Deadlift', sessionIndex: 3, reps: 3, weightKg: 150, done: true },
       ];
       const gains = exerciseWeightGains(sets);
       expect(gains).toHaveLength(2);
@@ -72,8 +72,8 @@ describe('trainingStats extended', () => {
 
     it('bodyweight exercises (null weight)', () => {
       const sets = [
-        { exerciseId: 3, exerciseName: 'Pull-up', sessionIndex: 1, reps: 8, weightKg: null, done: true },
-        { exerciseId: 3, exerciseName: 'Pull-up', sessionIndex: 2, reps: 10, weightKg: null, done: true },
+        { exerciseId: '3', exerciseName: 'Pull-up', sessionIndex: 1, reps: 8, weightKg: null, done: true },
+        { exerciseId: '3', exerciseName: 'Pull-up', sessionIndex: 2, reps: 10, weightKg: null, done: true },
       ];
       const gains = exerciseWeightGains(sets);
       expect(gains[0].maxWeightKg).toBe(0);
@@ -82,7 +82,7 @@ describe('trainingStats extended', () => {
 
     it('only one session (no gain)', () => {
       const sets = [
-        { exerciseId: 1, exerciseName: 'New Exercise', sessionIndex: 1, reps: 10, weightKg: 50, done: true },
+        { exerciseId: '1', exerciseName: 'New Exercise', sessionIndex: 1, reps: 10, weightKg: 50, done: true },
       ];
       const gains = exerciseWeightGains(sets);
       expect(gains[0].sessionCount).toBe(1);

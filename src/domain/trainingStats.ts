@@ -162,7 +162,7 @@ export function monthlyTraining(
 }
 
 export interface ExerciseWeightGain {
-  exerciseId: number;
+  exerciseId: string;
   exerciseName: string;
   sessionCount: number; // total sessions with this exercise
   sessionCountForGain: number; // sessions from 2nd onwards
@@ -181,7 +181,7 @@ export interface ExerciseWeightGain {
  */
 export function exerciseWeightGains(
   exerciseSets: {
-    exerciseId: number;
+    exerciseId: string;
     exerciseName: string;
     sessionIndex: number; // 1st, 2nd, 3rd session with this exercise
     reps: number | null;
@@ -189,7 +189,7 @@ export function exerciseWeightGains(
     done: boolean;
   }[]
 ): ExerciseWeightGain[] {
-  const grouped = new Map<number, typeof exerciseSets>();
+  const grouped = new Map<string, typeof exerciseSets>();
 
   for (const set of exerciseSets) {
     if (!grouped.has(set.exerciseId)) {

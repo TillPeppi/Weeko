@@ -12,7 +12,7 @@ export const STALL_MIN_SESSIONS = 4;
 export const STALL_SINCE_PR = 3;
 
 export interface StalledExercise {
-  exerciseId: number;
+  exerciseId: string;
   /** weighted sessions logged since the last estimated-1RM PR */
   sessionsSincePr: number;
   /** heaviest weight in the most recent session (kg) */
@@ -25,7 +25,7 @@ export interface StalledExercise {
  * sessions). Returns the exercise stalled longest, or null if none qualify.
  */
 export function stalledExercise(sets: TrainingSetLike[]): StalledExercise | null {
-  const byExercise = new Map<number, ExerciseSetRow[]>();
+  const byExercise = new Map<string, ExerciseSetRow[]>();
   for (const set of sets) {
     const list = byExercise.get(set.exerciseId) ?? [];
     list.push({ sessionId: set.sessionId, date: set.date, reps: set.reps, weightKg: set.weightKg, done: set.done });

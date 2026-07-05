@@ -1,5 +1,7 @@
 import { and, asc, desc, eq, gte, lte } from 'drizzle-orm';
 import { db, nowIso } from '../client';
+import { newId } from '../id';
+import { auditInsert } from '../audit';
 import { foodEntry, foodProduct, type FoodEntry, type FoodProduct } from '../schema';
 import type { FoodProductData, Nutrients } from '@/domain/nutrition';
 
@@ -80,22 +82,22 @@ export async function addEntry(values: {
   name: string;
   amountG: number;
   nutrients: Nutrients;
-}): Promise<number> {
-  const inserted = await db
+}): Promise<string> {
+  const id = newId();
+  await db
     .insert(foodEntry)
-    .values({ ...values, barcode: values.barcode ?? null, createdAt: nowIso() })
-    .returning({ id: foodEntry.id });
-  return inserted[0].id;
+    .values({ ...values, id, barcode: values.barcode ?? null, createdAt: nowIso(), ...auditInsert() });
+  return id;
 }
 
 export async function updateEntry(
-  id: number,
+  id: string,
   values: { amountG: number; meal: MealType }
 ): Promise<void> {
   await db.update(foodEntry).set(values).where(eq(foodEntry.id, id));
 }
 
-export async function deleteEntry(id: number): Promise<void> {
+export async function deleteEntry(id: string): Promise<void> {
   await db.delete(foodEntry).where(eq(foodEntry.id, id));
 }
 

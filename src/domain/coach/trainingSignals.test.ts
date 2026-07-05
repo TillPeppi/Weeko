@@ -12,7 +12,14 @@ const set = (
   sessionId: number,
   date: string,
   weightKg: number
-): TrainingSetLike => ({ exerciseId, sessionId, date, reps: 1, weightKg, done: true });
+): TrainingSetLike => ({
+  exerciseId: String(exerciseId),
+  sessionId: String(sessionId),
+  date,
+  reps: 1,
+  weightKg,
+  done: true,
+});
 
 /** Build weighted sessions for one exercise from a list of top weights. */
 const sessions = (exerciseId: number, weights: number[]): TrainingSetLike[] =>
@@ -22,7 +29,7 @@ describe('stalledExercise', () => {
   it('flags an exercise whose 1RM peaked STALL_SINCE_PR+ sessions ago', () => {
     // PR at session 2 (110), then 3 sessions without a new best
     const result = stalledExercise(sessions(1, [100, 110, 105, 105, 105]));
-    expect(result).toEqual({ exerciseId: 1, sessionsSincePr: 3, lastWeightKg: 105 });
+    expect(result).toEqual({ exerciseId: '1', sessionsSincePr: 3, lastWeightKg: 105 });
   });
 
   it('returns null while still progressing (PR is recent)', () => {
@@ -38,17 +45,17 @@ describe('stalledExercise', () => {
       ...sessions(1, [100, 110, 105, 105]), // stalled 2
       ...sessions(2, [50, 60, 55, 55, 55, 55]), // stalled 4
     ]);
-    expect(result?.exerciseId).toBe(2);
+    expect(result?.exerciseId).toBe('2');
     expect(result?.sessionsSincePr).toBe(4);
   });
 
   it('ignores bodyweight-only sets (no 1RM)', () => {
     const bodyweight = [1, 2, 3, 4].map((i) => ({
-      exerciseId: 9,
-      sessionId: i,
+      exerciseId: '9',
+      sessionId: String(i),
       date: `2026-06-0${i}`,
       reps: 10,
-      weightKg: null,
+      weightKg: null as number | null,
       done: true,
     }));
     expect(stalledExercise(bodyweight)).toBeNull();

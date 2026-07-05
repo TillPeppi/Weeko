@@ -1,5 +1,7 @@
 import { asc, desc, eq, gte } from 'drizzle-orm';
 import { db, nowIso } from '../client';
+import { newId } from '../id';
+import { auditInsert } from '../audit';
 import { bodyMeasurement, type BodyMeasurement } from '../schema';
 import { subDays } from 'date-fns';
 
@@ -11,10 +13,12 @@ export async function addMeasurement(
   const rows = await db
     .insert(bodyMeasurement)
     .values({
+      id: newId(),
       date,
       weightKg,
       fatPercent: fatPercent ?? null,
       createdAt: nowIso(),
+      ...auditInsert(),
     })
     .returning();
   return rows[0];

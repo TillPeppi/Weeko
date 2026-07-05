@@ -1,5 +1,7 @@
 import { and, asc, eq, isNull, or } from 'drizzle-orm';
 import { db, nowIso } from '../client';
+import { newId } from '../id';
+import { auditInsert } from '../audit';
 import { task, type Task } from '../schema';
 
 export async function listTasks(): Promise<Task[]> {
@@ -31,32 +33,32 @@ export async function createTask(values: {
   windowDay?: string | null;
   windowStart?: string | null;
   windowEnd?: string | null;
-  weekId?: number | null;
-  blockId?: number | null;
-}): Promise<number> {
-  const inserted = await db
-    .insert(task)
-    .values({
-      title: values.title,
-      category: values.category,
-      estimatedMinutes: values.estimatedMinutes ?? null,
-      recurrence: values.recurrence ?? 'none',
-      windowDay: values.windowDay ?? null,
-      windowStart: values.windowStart ?? null,
-      windowEnd: values.windowEnd ?? null,
-      weekId: values.weekId ?? null,
-      blockId: values.blockId ?? null,
-      createdAt: nowIso(),
-    })
-    .returning({ id: task.id });
-  return inserted[0].id;
+  weekId?: string | null;
+  blockId?: string | null;
+}): Promise<string> {
+  const id = newId();
+  await db.insert(task).values({
+    id,
+    title: values.title,
+    category: values.category,
+    estimatedMinutes: values.estimatedMinutes ?? null,
+    recurrence: values.recurrence ?? 'none',
+    windowDay: values.windowDay ?? null,
+    windowStart: values.windowStart ?? null,
+    windowEnd: values.windowEnd ?? null,
+    weekId: values.weekId ?? null,
+    blockId: values.blockId ?? null,
+    createdAt: nowIso(),
+    ...auditInsert(),
+  });
+  return id;
 }
 
 /**
  * Completes a task. Recurring tasks spawn the next occurrence
  * (daily: +1 day, weekly: +7 days on the same weekday).
  */
-export async function completeTask(id: number): Promise<void> {
+export async function completeTask(id: string): Promise<void> {
   const rows = await db.select().from(task).where(eq(task.id, id));
   const current = rows[0];
   if (!current) return;
@@ -66,6 +68,7 @@ export async function completeTask(id: number): Promise<void> {
     const baseDay = current.windowDay ?? new Date().toISOString().slice(0, 10);
     const nextDay = addDays(baseDay, current.recurrence === 'daily' ? 1 : 7);
     await db.insert(task).values({
+      id: newId(),
       title: current.title,
       category: current.category,
       estimatedMinutes: current.estimatedMinutes,
@@ -75,16 +78,17 @@ export async function completeTask(id: number): Promise<void> {
       windowEnd: current.windowEnd,
       context: current.context,
       createdAt: nowIso(),
+      ...auditInsert(),
     });
   }
 }
 
-export async function reopenTask(id: number): Promise<void> {
+export async function reopenTask(id: string): Promise<void> {
   await db.update(task).set({ status: 'open', completedAt: null }).where(eq(task.id, id));
 }
 
 export async function updateTask(
-  id: number,
+  id: string,
   values: Partial<
     Pick<
       Task,
@@ -101,7 +105,7 @@ export async function updateTask(
   await db.update(task).set(values).where(eq(task.id, id));
 }
 
-export async function deleteTask(id: number): Promise<void> {
+export async function deleteTask(id: string): Promise<void> {
   await db.delete(task).where(eq(task.id, id));
 }
 

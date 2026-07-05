@@ -17,7 +17,8 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "package": "com.tillpeppmoeller.weeko"
     },
     "web": {
       "output": "static",
@@ -55,7 +56,7 @@
       "reactCompiler": false
     },
     "ios": {
-      "bundleIdentifier": "com.tillpeppi.Weeko",
+      "bundleIdentifier": "com.tillpeppmoeller.weeko",
       "appleTeamId": "BW54MR7M6G",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

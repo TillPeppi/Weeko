@@ -1,0 +1,23 @@
+# Weeko — PowerSync Sync Rules (deploy to your PowerSync Cloud instance).
+# Single-user-per-account: each user syncs only their own rows. `user_id` is
+# matched against the authenticated Supabase user (request.user_id() = auth uid).
+#
+# Only the text-id data tables are listed (they match src/db/powersync/schema.ts).
+# profile / weekly_structure / notification_pref need a text `id` column before
+# they can be added here (see docs/POWERSYNC_SETUP.md).
+bucket_definitions:
+  user_data:
+    parameters: SELECT request.user_id() AS user_id
+    data:
+      - SELECT * FROM equipment WHERE user_id = bucket.user_id
+      - SELECT * FROM exercise WHERE user_id = bucket.user_id
+      - SELECT * FROM week WHERE user_id = bucket.user_id
+      - SELECT * FROM block WHERE user_id = bucket.user_id
+      - SELECT * FROM task WHERE user_id = bucket.user_id
+      - SELECT * FROM session_template WHERE user_id = bucket.user_id
+      - SELECT * FROM workout_session WHERE user_id = bucket.user_id
+      - SELECT * FROM set_log WHERE user_id = bucket.user_id
+      - SELECT * FROM week_template WHERE user_id = bucket.user_id
+      - SELECT * FROM food_entry WHERE user_id = bucket.user_id
+      - SELECT * FROM body_measurement WHERE user_id = bucket.user_id
+      - SELECT * FROM coach_dismissal WHERE user_id = bucket.user_id

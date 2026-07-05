@@ -25,7 +25,7 @@ import { isValidIsoDate, isValidTime } from '@/domain/time';
 type Recurrence = 'none' | 'daily' | 'weekly';
 
 interface TaskDraft {
-  id?: number;
+  id?: string;
   title: string;
   category: string;
   estimatedMinutes: string;

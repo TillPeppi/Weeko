@@ -8,7 +8,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from 'nativewind';
 import { format, parseISO } from 'date-fns';
-import { Dumbbell, Play } from 'lucide-react-native';
+import { Dumbbell, FileJson, Play } from 'lucide-react-native';
 import { Screen } from '@/components/Screen';
 import { TrainingDashboard } from '@/components/training/TrainingDashboard';
 import { Button } from '@/components/ui/Button';
@@ -37,7 +37,7 @@ export default function TrainingScreen() {
     }, [])
   );
 
-  const startFromTemplate = async (templateId: number, title: string) => {
+  const startFromTemplate = async (templateId: string, title: string) => {
     const id = await store.start({ title, templateId });
     router.push(`/session/${id}`);
   };
@@ -109,6 +109,12 @@ export default function TrainingScreen() {
           </Card>
         ))}
         <Button title={t('training.adhoc')} variant="secondary" onPress={() => void startAdhoc()} />
+        <Button
+          title={t('training.import.cta')}
+          variant="ghost"
+          icon={<FileJson size={18} color={uiColor('accent', dark)} />}
+          onPress={() => router.push('/training-import')}
+        />
       </View>
 
       <SectionTitle className="mt-6">{t('training.history')}</SectionTitle>

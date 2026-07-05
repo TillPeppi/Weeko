@@ -2,6 +2,8 @@ import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import type { WeekImportParsed } from '@/schemas/week';
 import type { BlockStatus } from '@/domain/types';
 import { db, nowIso } from '../client';
+import { newId } from '../id';
+import { auditInsert } from '../audit';
 import { block, task, week, weekTemplate, type Block, type Week, type WeekTemplate } from '../schema';
 
 export interface WeekWithBlocks {
@@ -58,7 +60,7 @@ export async function getBlocksForDate(date: string): Promise<Block[]> {
 export async function applyWeekImport(
   data: WeekImportParsed,
   source: 'imported' | 'template' = 'imported'
-): Promise<number> {
+): Promise<string> {
   return db.transaction(async (tx) => {
     const existing = await tx
       .select()
@@ -71,21 +73,21 @@ export async function applyWeekImport(
       await tx.delete(week).where(eq(week.id, existing[0].id));
     }
 
-    const inserted = await tx
-      .insert(week)
-      .values({
-        year: data.week.year,
-        isoWeek: data.week.isoWeek,
-        status: 'planned',
-        source,
-        createdAt: nowIso(),
-      })
-      .returning({ id: week.id });
-    const weekId = inserted[0].id;
+    const weekId = newId();
+    await tx.insert(week).values({
+      id: weekId,
+      year: data.week.year,
+      isoWeek: data.week.isoWeek,
+      status: 'planned',
+      source,
+      createdAt: nowIso(),
+      ...auditInsert(),
+    });
 
     for (const day of data.days) {
       for (const b of day.blocks) {
         await tx.insert(block).values({
+          id: newId(),
           weekId,
           date: day.date,
           type: b.type,
@@ -94,12 +96,14 @@ export async function applyWeekImport(
           title: b.title,
           details: b.details ?? null,
           status: 'planned',
+          ...auditInsert(),
         });
       }
     }
 
     for (const t of data.tasks ?? []) {
       await tx.insert(task).values({
+        id: newId(),
         title: t.title,
         category: t.category,
         estimatedMinutes: t.estimatedMinutes ?? null,
@@ -109,6 +113,7 @@ export async function applyWeekImport(
         context: t.context ?? null,
         weekId,
         createdAt: nowIso(),
+        ...auditInsert(),
       });
     }
 
@@ -116,18 +121,18 @@ export async function applyWeekImport(
   });
 }
 
-export async function setBlockStatus(blockId: number, status: BlockStatus): Promise<void> {
+export async function setBlockStatus(blockId: string, status: BlockStatus): Promise<void> {
   await db.update(block).set({ status }).where(eq(block.id, blockId));
 }
 
 export async function updateBlock(
-  blockId: number,
+  blockId: string,
   values: Partial<Pick<Block, 'start' | 'end' | 'title' | 'type' | 'date' | 'details'>>
 ): Promise<void> {
   await db.update(block).set(values).where(eq(block.id, blockId));
 }
 
-export async function deleteBlock(blockId: number): Promise<void> {
+export async function deleteBlock(blockId: string): Promise<void> {
   await db.delete(block).where(eq(block.id, blockId));
 }
 
@@ -157,7 +162,9 @@ export async function saveWeekAsTemplate(name: string, source: WeekWithBlocks): 
         details: b.details ?? undefined,
       })),
     }));
-  await db.insert(weekTemplate).values({ name, data: { days }, createdAt: nowIso() });
+  await db
+    .insert(weekTemplate)
+    .values({ id: newId(), name, data: { days }, createdAt: nowIso(), ...auditInsert() });
 }
 
 function isoWeekdayOf(date: string): number {
@@ -169,7 +176,7 @@ export async function listWeekTemplates(): Promise<WeekTemplate[]> {
   return db.select().from(weekTemplate).orderBy(asc(weekTemplate.name));
 }
 
-export async function deleteWeekTemplate(id: number): Promise<void> {
+export async function deleteWeekTemplate(id: string): Promise<void> {
   await db.delete(weekTemplate).where(eq(weekTemplate.id, id));
 }
 

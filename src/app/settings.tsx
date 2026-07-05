@@ -8,7 +8,7 @@ import { Platform, Pressable, Share, Switch, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from 'nativewind';
-import { ChevronDown, ChevronRight, Download, Trash2, X } from 'lucide-react-native';
+import { BarChart3, ChevronDown, ChevronRight, Download, LogOut, Trash2, X } from 'lucide-react-native';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -21,6 +21,8 @@ import { WeekStructureEditor } from '@/components/editors/WeekStructureEditor';
 import { ProfileEditor, type ProfileDraft } from '@/components/editors/ProfileEditor';
 import { EquipmentExerciseEditor } from '@/components/editors/EquipmentExerciseEditor';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useAuthStore } from '@/stores/authStore';
+import { isAuthConfigured } from '@/auth/supabase';
 import { getWeeklyStructure, saveWeeklyStructure } from '@/db/repos/structureRepo';
 import { getProfile, upsertProfile } from '@/db/repos/profileRepo';
 import { listNotificationPrefs, upsertNotificationPref } from '@/db/repos/notificationRepo';
@@ -62,6 +64,8 @@ export default function SettingsScreen() {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const settings = useSettingsStore();
+  const authEmail = useAuthStore((s) => s.session?.user.email ?? null);
+  const signOut = useAuthStore((s) => s.signOut);
   const [prefs, setPrefs] = useState<NotificationPref[]>([]);
   const [structure, setStructure] = useState<WeekdayStructureSeed[]>([]);
   const [profile, setProfile] = useState<ProfileDraft>({
@@ -406,9 +410,33 @@ export default function SettingsScreen() {
         <EquipmentExerciseEditor />
       </CollapsibleCard>
 
+      {isAuthConfigured ? (
+        <Card className="mt-4">
+          <SectionTitle>{t('settings.account.title')}</SectionTitle>
+          <View className="mt-3 gap-3">
+            <View>
+              <Label>{t('settings.account.signedInAs')}</Label>
+              <Body>{authEmail ?? '—'}</Body>
+            </View>
+            <Button
+              title={t('settings.account.signOut')}
+              variant="secondary"
+              icon={<LogOut size={18} color={uiColor('muted', dark)} />}
+              onPress={() => void signOut()}
+            />
+          </View>
+        </Card>
+      ) : null}
+
       <Card className="mt-4">
         <SectionTitle>{t('settings.data.title')}</SectionTitle>
         <View className="mt-3 gap-3">
+          <Button
+            title={t('settings.data.analysisExport')}
+            variant="secondary"
+            icon={<BarChart3 size={18} color={uiColor('muted', dark)} />}
+            onPress={() => router.push('/export')}
+          />
           <Button
             title={t('settings.data.export')}
             variant="secondary"

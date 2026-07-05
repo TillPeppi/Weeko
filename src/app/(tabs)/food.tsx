@@ -87,7 +87,7 @@ function TargetRow({ label, value, target, unit, kind, dark, hint }: TargetRowPr
 }
 
 interface EntryEdit {
-  id: number;
+  id: string;
   amount: string;
   meal: MealType;
 }
