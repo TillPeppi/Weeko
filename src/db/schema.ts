@@ -22,7 +22,7 @@ const syncCols = () => ({
 
 /** Single-row table (id = 1): body data, goal, language, theme. */
 export const profile = sqliteTable('profile', {
-  id: integer('id').primaryKey(),
+  id: text('id').primaryKey(),
   userId: text('user_id'),
   heightCm: real('height_cm'),
   age: integer('age'),
@@ -49,7 +49,8 @@ export interface FixedBlockSeed {
 
 /** One row per ISO weekday (1 = Monday … 7 = Sunday). */
 export const weeklyStructure = sqliteTable('weekly_structure', {
-  weekday: integer('weekday').primaryKey(),
+  id: text('id').primaryKey(),
+  weekday: integer('weekday').notNull(),
   workStart: text('work_start'),
   workEnd: text('work_end'),
   workLocation: text('work_location', { enum: ['office', 'home'] }),
@@ -203,7 +204,8 @@ export const weekTemplate = sqliteTable('week_template', {
  * offline once fetched.
  */
 export const foodProduct = sqliteTable('food_product', {
-  barcode: text('barcode').primaryKey(),
+  id: text('id').primaryKey(),
+  barcode: text('barcode').notNull(),
   name: text('name').notNull(),
   brand: text('brand'),
   /** package size as text, e.g. "500 g" */
@@ -230,7 +232,7 @@ export const foodEntry = sqliteTable('food_entry', {
   meal: text('meal', { enum: ['breakfast', 'lunch', 'dinner', 'snack'] })
     .notNull()
     .default('snack'),
-  barcode: text('barcode').references(() => foodProduct.barcode, { onDelete: 'set null' }),
+  barcode: text('barcode'),
   name: text('name').notNull(),
   amountG: real('amount_g').notNull(),
   /** per 100 g snapshot */
@@ -252,7 +254,8 @@ export const coachDismissal = sqliteTable('coach_dismissal', {
 });
 
 export const notificationPref = sqliteTable('notification_pref', {
-  category: text('category').primaryKey(),
+  id: text('id').primaryKey(),
+  category: text('category').notNull(),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
   quietStart: text('quiet_start'),
   quietEnd: text('quiet_end'),
@@ -273,6 +276,12 @@ export const bodyMeasurement = sqliteTable('body_measurement', {
   weightKg: real('weight_kg').notNull(),
   /** optional body fat percentage (0–100) */
   fatPercent: real('fat_percent'),
+  /** optional muscle mass in kg */
+  muscleMassKg: real('muscle_mass_kg'),
+  /** optional bone mass in kg */
+  boneMassKg: real('bone_mass_kg'),
+  /** optional basal metabolic rate (Grundumsatz) in kcal */
+  bmrKcal: real('bmr_kcal'),
   createdAt: text('created_at').notNull(),
   ...syncCols(),
 });

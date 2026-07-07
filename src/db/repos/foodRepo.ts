@@ -12,7 +12,9 @@ export async function getProduct(barcode: string): Promise<FoodProduct | undefin
   return rows[0];
 }
 
-/** Caches a fetched/normalized product (insert or refresh). */
+/** Caches a fetched/normalized product (insert or refresh). Manual upsert keyed by
+ *  barcode — PowerSync's local tables don't enforce the unique constraint that
+ *  onConflictDoUpdate needs. `food_product` is a local-only table (not synced). */
 export async function upsertProduct(
   data: FoodProductData,
   source: 'off' | 'custom' = 'off'
@@ -29,10 +31,12 @@ export async function upsertProduct(
     source,
     fetchedAt: nowIso(),
   };
-  await db
-    .insert(foodProduct)
-    .values(values)
-    .onConflictDoUpdate({ target: foodProduct.barcode, set: values });
+  const existing = await getProduct(data.barcode);
+  if (existing) {
+    await db.update(foodProduct).set(values).where(eq(foodProduct.barcode, data.barcode));
+  } else {
+    await db.insert(foodProduct).values({ id: newId(), ...values });
+  }
 }
 
 export async function setFavorite(barcode: string, favorite: boolean): Promise<void> {

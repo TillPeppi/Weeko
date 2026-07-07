@@ -1,7 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from 'nativewind';
-import { Apple, CalendarDays, Dumbbell, House, ListChecks } from 'lucide-react-native';
+import { Apple, CalendarDays, Dumbbell, House, ListChecks, Scale } from 'lucide-react-native';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 export default function TabsLayout() {
@@ -54,6 +54,13 @@ export default function TabsLayout() {
         options={{
           title: t('tabs.food'),
           tabBarIcon: ({ color, size }) => <Apple color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="body"
+        options={{
+          title: t('tabs.body'),
+          tabBarIcon: ({ color, size }) => <Scale color={color} size={size} />,
         }}
       />
       <Tabs.Screen

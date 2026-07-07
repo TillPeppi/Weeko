@@ -1,5 +1,7 @@
 import { asc, eq } from 'drizzle-orm';
 import { db } from '../client';
+import { newId } from '../id';
+import { auditInsert } from '../audit';
 import { notificationPref, type NotificationPref } from '../schema';
 import { defaultNotificationPrefs } from '../seeds';
 
@@ -17,13 +19,13 @@ export async function getNotificationPref(category: string): Promise<Notificatio
 
 export async function upsertNotificationPref(
   category: string,
-  values: Partial<Omit<NotificationPref, 'category'>>
+  values: Partial<Omit<NotificationPref, 'id' | 'category'>>
 ): Promise<void> {
   const existing = await getNotificationPref(category);
   if (existing) {
     await db.update(notificationPref).set(values).where(eq(notificationPref.category, category));
   } else {
-    await db.insert(notificationPref).values({ category, ...values });
+    await db.insert(notificationPref).values({ id: newId(), category, ...values, ...auditInsert() });
   }
 }
 
@@ -33,6 +35,6 @@ export async function seedNotificationPrefs(): Promise<void> {
   const existing = new Set((await listNotificationPrefs()).map((p) => p.category));
   for (const pref of defaultNotificationPrefs()) {
     if (existing.has(pref.category)) continue;
-    await db.insert(notificationPref).values(pref);
+    await db.insert(notificationPref).values({ id: newId(), ...pref, ...auditInsert() });
   }
 }

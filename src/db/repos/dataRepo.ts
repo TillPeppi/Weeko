@@ -5,7 +5,7 @@
  * explicitly exports.
  */
 import { and, asc, eq, gte, inArray, lt, lte, ne, or } from 'drizzle-orm';
-import { db, expoDb } from '../client';
+import { db } from '../client';
 import {
   block,
   bodyMeasurement,
@@ -183,6 +183,9 @@ export async function collectAnalysisRange(start: string, end: string): Promise<
       date: m.date,
       weightKg: m.weightKg,
       fatPercent: m.fatPercent,
+      muscleMassKg: m.muscleMassKg,
+      boneMassKg: m.boneMassKg,
+      bmrKcal: m.bmrKcal,
     })),
   };
 }
@@ -206,10 +209,4 @@ export async function deleteAllData(): Promise<void> {
     await tx.delete(notificationPref);
     await tx.delete(profile);
   });
-  // reclaim space; ignore failure (e.g. web backend without VACUUM support)
-  try {
-    await expoDb.execAsync('VACUUM');
-  } catch {
-    /* noop */
-  }
 }

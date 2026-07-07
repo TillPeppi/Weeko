@@ -1,18 +1,14 @@
 /**
- * PowerSync local schema — SCAFFOLD, not yet wired (docs/POWERSYNC_SETUP.md).
+ * PowerSync local schema — derived from the Drizzle tables via `DrizzleAppSchema`
+ * (one source of truth). PowerSync manages the local SQLite tables from this
+ * schema (every table keyed by a text `id`), so the app's Drizzle migrations are
+ * no longer applied locally once the swap is active.
  *
- * Derived from the existing Drizzle tables via `DrizzleAppSchema`, so there's one
- * source of truth for the client schema. Only tables with a text `id` primary key
- * can be synced by PowerSync — the clean data tables below qualify.
- *
- * NOT included yet (finalize at activation):
- *  - `food_product` — local Open-Food-Facts cache, intentionally not synced.
- *  - `profile` (integer id=1), `weekly_structure` (keyed by weekday),
- *    `notification_pref` (keyed by category) — these lack a text `id` PK, so they
- *    need a text `id` column (or per-user modelling) before they can sync. The
- *    Postgres mirror + RLS for them already exists in supabase/schema.sql.
+ * Synced tables: everything the user owns. `food_product` (Open-Food-Facts cache)
+ * and `coach_dismissal` (per-device UI state; its id isn't unique across users)
+ * are LOCAL-ONLY — present locally, never uploaded.
  */
-import { DrizzleAppSchema } from '@powersync/drizzle-driver';
+import { DrizzleAppSchema, type DrizzleTableWithPowerSyncOptions } from '@powersync/drizzle-driver';
 import {
   block,
   bodyMeasurement,
@@ -20,16 +16,29 @@ import {
   equipment,
   exercise,
   foodEntry,
+  foodProduct,
+  notificationPref,
+  profile,
   sessionTemplate,
   setLog,
   task,
   week,
+  weeklyStructure,
   weekTemplate,
   workoutSession,
 } from '../schema';
 
-/** Drizzle tables that PowerSync syncs (text-id data tables). */
+const localOnly = (table: unknown): DrizzleTableWithPowerSyncOptions => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tableDefinition: table as any,
+  options: { localOnly: true },
+});
+
+/** All Drizzle tables the repos query — passed to wrapPowerSyncWithDrizzle for typing. */
 export const drizzleSyncSchema = {
+  profile,
+  weeklyStructure,
+  notificationPref,
   equipment,
   exercise,
   week,
@@ -41,8 +50,26 @@ export const drizzleSyncSchema = {
   weekTemplate,
   foodEntry,
   bodyMeasurement,
+  foodProduct,
   coachDismissal,
 };
 
-/** PowerSync local schema inferred from the Drizzle tables above. */
-export const AppSchema = new DrizzleAppSchema(drizzleSyncSchema);
+/** PowerSync local schema: synced tables + local-only caches. */
+export const AppSchema = new DrizzleAppSchema({
+  profile,
+  weeklyStructure,
+  notificationPref,
+  equipment,
+  exercise,
+  week,
+  block,
+  task,
+  sessionTemplate,
+  workoutSession,
+  setLog,
+  weekTemplate,
+  foodEntry,
+  bodyMeasurement,
+  foodProduct: localOnly(foodProduct),
+  coachDismissal: localOnly(coachDismissal),
+});

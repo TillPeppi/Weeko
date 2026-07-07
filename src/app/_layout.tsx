@@ -6,9 +6,8 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
-import { db, initDb } from '@/db/client';
-import migrations from '@/db/migrations/migrations';
+import { initDb } from '@/db/client';
+import { connectSync, disconnectSync, isPowerSyncConfigured } from '@/db/powersync/system';
 import { bootstrapDefaults } from '@/db/bootstrap';
 import { SplashPulse } from '@/components/SplashPulse';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -39,8 +38,8 @@ export default function RootLayout() {
   useEffect(() => {
     void (async () => {
       try {
+        // PowerSync creates the local schema itself — no Drizzle migrate() here.
         await initDb();
-        await migrate(db, migrations);
         await bootstrapDefaults();
         await useSettingsStore.getState().hydrate();
         await useTrainingStore.getState().hydrate();
@@ -51,6 +50,14 @@ export default function RootLayout() {
       }
     })();
   }, []);
+
+  // Sync lifecycle: connect PowerSync while signed in, disconnect on sign-out.
+  // No-op until a PowerSync instance URL is configured.
+  useEffect(() => {
+    if (!ready || !isPowerSyncConfigured) return;
+    if (session) void connectSync();
+    else void disconnectSync();
+  }, [ready, session]);
 
   // Auth gate: only active once a Supabase project is configured. Signed-out
   // users land on /login; signed-in users are pushed out of it. When auth is

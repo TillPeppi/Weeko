@@ -50,6 +50,7 @@
     "today": "Heute",
     "training": "Training",
     "food": "Ernährung",
+    "body": "Körper",
     "tasks": "Aufgaben",
     "settings": "Einstellungen"
   },
@@ -631,6 +632,9 @@
       "analysisExport": "Analyse-Export (Woche/Monat)",
       "export": "Daten exportieren (JSON)",
       "exportDone": "Export erstellt",
+      "loadDemo": "Demo-Daten laden",
+      "demoHint": "Füllt alle Screens mit realistischer Historie (Gewicht, Training, Ernährung, Wochen) — zum Testen.",
+      "demoLoaded": "Demo-Daten geladen",
       "deleteAll": "Alle Daten löschen",
       "deleteConfirmTitle": "Wirklich alles löschen?",
       "deleteConfirmMessage": "Alle Wochen, Aufgaben, Trainings und Einstellungen werden unwiderruflich gelöscht.",
@@ -761,5 +765,29 @@
     "strain": "Belastung",
     "sleepNeed": "Schlafbedarf",
     "disclaimer": "Schätzung aus Schlaf & Herzfrequenz — keine medizinische Beratung."
+  },
+  "bodyLog": {
+    "title": "Körperdaten",
+    "subtitle": "Gewicht & Körperzusammensetzung erfassen",
+    "newEntry": "Neue Messung",
+    "editEntry": "Messung bearbeiten",
+    "date": "Datum",
+    "weight": "Gewicht",
+    "fat": "Körperfett",
+    "fatShort": "KF",
+    "muscle": "Muskelmasse",
+    "muscleShort": "Muskel",
+    "bone": "Knochenmasse",
+    "bmr": "Grundumsatz",
+    "bmi": "BMI",
+    "bmiNoHeight": "Größe im Profil fehlt",
+    "bmiCategory": {
+      "underweight": "Untergewicht",
+      "normal": "Normalgewicht",
+      "overweight": "Übergewicht",
+      "obese": "Adipositas"
+    },
+    "history": "Verlauf",
+    "empty": "Noch keine Messungen erfasst."
   }
 }

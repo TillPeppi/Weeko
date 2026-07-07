@@ -1,6 +1,56 @@
 # Weeko — Fortschritt
 
-> Nach jeder Session aktualisieren. Stand: **2026-07-05** (Session 17: Sync-Schritt 4 — PowerSync-Scaffold + lokale Prep; Session 16: Accounts/Auth — Supabase-Login; Session 15: Sync-Vorbereitung — Text-UUID-PKs; Session 1: Phase-1-Aufbau; Session 2: Design-Richtung "Dark Focus"; Session 3: Dark Focus auf alle Screens ausgerollt; Session 4: Essenstracker; Session 5: Swipe/Animationen/Wochenbilanz/Essenstracker-Ausbau; Session 7: Statistik-Screen; Session 8: Redesign "Neo Brutal"; Session 9: Coach-Engine — regelbasierte „KI"; Session 10: Körper-Level / Strain / Schlafbedarf / HRV-Verlauf — Bevel-Kernkompetenz; Session 11: Supersätze; Session 12: Übungskatalog + Piktogramme + freie Session; Session 13: Waage + erweiterte Stats; Session 14: Trainings-Import per KI-Prompt + Analyse-Export).
+> Nach jeder Session aktualisieren. Stand: **2026-07-07** (Session 19: Körperdaten-Eingabe-Screen + erweiterte Messwerte — Muskelmasse/Knochenmasse/Grundumsatz/BMI; Session 18: PowerSync-Engine-Swap verdrahtet, nativ zu verifizieren; Session 17: Sync-Schritt 4 — PowerSync-Scaffold + lokale Prep; Session 16: Accounts/Auth — Supabase-Login; Session 15: Sync-Vorbereitung — Text-UUID-PKs; Session 1: Phase-1-Aufbau; Session 2: Design-Richtung "Dark Focus"; Session 3: Dark Focus auf alle Screens ausgerollt; Session 4: Essenstracker; Session 5: Swipe/Animationen/Wochenbilanz/Essenstracker-Ausbau; Session 7: Statistik-Screen; Session 8: Redesign "Neo Brutal"; Session 9: Coach-Engine — regelbasierte „KI"; Session 10: Körper-Level / Strain / Schlafbedarf / HRV-Verlauf — Bevel-Kernkompetenz; Session 11: Supersätze; Session 12: Übungskatalog + Piktogramme + freie Session; Session 13: Waage + erweiterte Stats; Session 14: Trainings-Import per KI-Prompt + Analyse-Export).
+
+## ⚖️ Session 19 — Körperdaten-Eingabe-Screen + erweiterte Messwerte
+
+Schließt die in Session 13 offen gebliebene Lücke: das Body-Measurement-Feature
+war komplett (Schema/Repo/Domain/Tests), hatte aber **kein UI** — man konnte nirgends
+Gewicht/Körperfett/… eintragen. Neu:
+
+- **Schema (Migration 0012):** `body_measurement` um `muscle_mass_kg`, `bone_mass_kg`,
+  `bmr_kcal` erweitert. BMI wird aus Gewicht + Profilgröße **berechnet** (kein Feld).
+  PowerSync-Schema leitet sich automatisch aus Drizzle ab; Supabase-Spalten ergänzt.
+- **Repo:** `bodyRepo.upsertMeasurement(date, input)` (ein Eintrag pro Tag) auf ein
+  `MeasurementInput`-Objekt umgestellt; `add/updateMeasurement` analog.
+- **Domain:** `bodyStats.current` um die neuen Werte erweitert; `bmiFrom()` +
+  `bmiCategory()` (WHO-Bänder) neu.
+- **UI:** neuer Screen `src/app/body.tsx` — Eingabe/Bearbeiten/Löschen pro Datum,
+  Live-BMI, Verlaufsliste mit KG-Veränderung. Einstieg über Waage-Icon im Stats-Header
+  (nicht auf Home). Route in `_layout.tsx` registriert.
+- **Export:** `analysisExport` + `dataRepo`-Backup führen die neuen Felder mit.
+- i18n `bodyLog.*` (de+en). **Typecheck + 196 Tests grün.** Browser-Verifikation durch
+  Auth-Gate des Sync-Branches blockiert; nativ/eingeloggt gegenzuprüfen.
+
+## 🔌 Session 18 — PowerSync-Engine-Swap verdrahtet (nativ zu verifizieren)
+
+Login ist live gegen Supabase verifiziert (Bug gefunden+gefixt: Dashboard- statt
+Project-URL in `.env`). Danach der komplette DB-Engine-Swap im Code — **typecheck +
+196 Tests grün**, aber Runtime-Verifikation erfolgt nativ (Dev-Build), nicht von hier.
+Anleitung + Risikostellen: [POWERSYNC_SETUP.md](./POWERSYNC_SETUP.md). Fallback:
+Checkpoint-Commit auf Branch `feat/accounts-sync` (Vor-Swap-Stand).
+
+- **DB-Client** (`src/db/client.ts`): `db` = Drizzle über PowerSync (lazy Proxy),
+  `initDb` = `PowerSync.init()`; kein `migrate()` mehr (PowerSync verwaltet das lokale
+  Schema). `src/db/powersync/system.ts`: cached db + `connectSync`/`disconnectSync` +
+  `isPowerSyncConfigured`.
+- **Schema-Modell:** Config-Tabellen (profile/weekly_structure/notification_pref) text-`id`;
+  `food_product` id-PK (+ barcode-Spalte); `foodEntry.barcode` ohne FK. `powersync/schema.ts`
+  deckt alle Tabellen ab, `food_product`+`coach_dismissal` = **local-only** (DrizzleAppSchema).
+- **Repos:** profile (Singleton select-first), structure/notification (id+audit on insert),
+  food (manueller upsert statt onConflict).
+- **`_layout.tsx`:** PowerSync-Init statt migrate; `connectSync()` bei Session, sonst disconnect.
+- **`supabase/schema.sql` neu:** id-PKs auf Config-Tabellen, `updated_at`/`user_id` überall,
+  Typen an SQLite angeglichen (bool→int, json→text); local-only Tabellen raus.
+  **`powersync/sync-rules.yaml` neu:** Config-Tabellen rein, coach_dismissal raus.
+- **`metro.config.js`:** inline-requires-Blocklist für `@powersync/react-native`.
+- **Web funktioniert (verifiziert):** `@powersync/web` läuft unter Expo/Metro via
+  `powersync-web copy-assets` → `public/@powersync/` (Worker/WASM), Pfade in
+  `factory.web.ts`; automatisiert über `postinstall` + `npm run web`. App bootet mit
+  PowerSync als DB, keine Konsolenfehler. Login live gegen Supabase verifiziert.
+- **Offen:** Sync-Round-Trip (braucht echten Login — headless nicht abschließbar),
+  nativ testen (Dev-Build), Daten-Claim (Alt-Daten nicht migriert), Logout-Clear.
+  Details in POWERSYNC_SETUP.md.
 
 ## 🔄 Session 17 — Sync-Schritt 4: lokale Prep + PowerSync-Scaffold (nicht verdrahtet)
 

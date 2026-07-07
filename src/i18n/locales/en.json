@@ -50,6 +50,7 @@
     "today": "Today",
     "training": "Training",
     "food": "Nutrition",
+    "body": "Body",
     "tasks": "Tasks",
     "settings": "Settings"
   },
@@ -631,6 +632,9 @@
       "analysisExport": "Analysis export (week/month)",
       "export": "Export data (JSON)",
       "exportDone": "Export created",
+      "loadDemo": "Load demo data",
+      "demoHint": "Fills every screen with realistic history (weight, training, nutrition, weeks) — for testing.",
+      "demoLoaded": "Demo data loaded",
       "deleteAll": "Delete all data",
       "deleteConfirmTitle": "Really delete everything?",
       "deleteConfirmMessage": "All weeks, tasks, workouts and settings will be permanently deleted.",
@@ -761,5 +765,29 @@
     "strain": "strain",
     "sleepNeed": "sleep need",
     "disclaimer": "Estimated from sleep & heart rate — not medical advice."
+  },
+  "bodyLog": {
+    "title": "Body data",
+    "subtitle": "Track weight & body composition",
+    "newEntry": "New measurement",
+    "editEntry": "Edit measurement",
+    "date": "Date",
+    "weight": "Weight",
+    "fat": "Body fat",
+    "fatShort": "BF",
+    "muscle": "Muscle mass",
+    "muscleShort": "Muscle",
+    "bone": "Bone mass",
+    "bmr": "Basal metabolic rate",
+    "bmi": "BMI",
+    "bmiNoHeight": "Height missing in profile",
+    "bmiCategory": {
+      "underweight": "Underweight",
+      "normal": "Normal weight",
+      "overweight": "Overweight",
+      "obese": "Obese"
+    },
+    "history": "History",
+    "empty": "No measurements recorded yet."
   }
 }

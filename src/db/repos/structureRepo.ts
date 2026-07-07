@@ -1,4 +1,6 @@
 import { db } from '../client';
+import { newId } from '../id';
+import { auditInsert } from '../audit';
 import { weeklyStructure, type WeeklyStructureRow } from '../schema';
 import type { WeekdayStructureSeed } from '../seeds';
 
@@ -12,7 +14,7 @@ export async function saveWeeklyStructure(rows: WeekdayStructureSeed[]): Promise
   await db.transaction(async (tx) => {
     await tx.delete(weeklyStructure);
     for (const row of rows) {
-      await tx.insert(weeklyStructure).values(row);
+      await tx.insert(weeklyStructure).values({ id: newId(), ...row, ...auditInsert() });
     }
   });
 }

@@ -8,7 +8,7 @@ import { Platform, Pressable, Share, Switch, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from 'nativewind';
-import { BarChart3, ChevronDown, ChevronRight, Download, LogOut, Trash2, X } from 'lucide-react-native';
+import { BarChart3, ChevronDown, ChevronRight, Download, LogOut, Sparkles, Trash2, X } from 'lucide-react-native';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -27,6 +27,7 @@ import { getWeeklyStructure, saveWeeklyStructure } from '@/db/repos/structureRep
 import { getProfile, upsertProfile } from '@/db/repos/profileRepo';
 import { listNotificationPrefs, upsertNotificationPref } from '@/db/repos/notificationRepo';
 import { exportAllData, deleteAllData } from '@/db/repos/dataRepo';
+import { seedDemoData } from '@/db/devSeed';
 import { bootstrapDefaults } from '@/db/bootstrap';
 import type { NotificationPref } from '@/db/schema';
 import type { WeekdayStructureSeed } from '@/db/seeds';
@@ -77,6 +78,7 @@ export default function SettingsScreen() {
   const [goals, setGoals] = useState<GoalsDraft>(emptyGoals);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -443,6 +445,20 @@ export default function SettingsScreen() {
             icon={<Download size={18} color={uiColor('muted', dark)} />}
             onPress={() => void exportData()}
           />
+          <Button
+            title={t('settings.data.loadDemo')}
+            variant="secondary"
+            loading={seeding}
+            icon={<Sparkles size={18} color={uiColor('muted', dark)} />}
+            onPress={() => {
+              setSeeding(true);
+              void seedDemoData()
+                .then(() => showFlash(t('settings.data.demoLoaded')))
+                .catch((e) => showFlash(String((e as Error).message)))
+                .finally(() => setSeeding(false));
+            }}
+          />
+          <Muted>{t('settings.data.demoHint')}</Muted>
           <Button
             title={t('settings.data.deleteAll')}
             variant="danger"

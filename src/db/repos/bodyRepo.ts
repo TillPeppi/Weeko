@@ -5,18 +5,35 @@ import { auditInsert } from '../audit';
 import { bodyMeasurement, type BodyMeasurement } from '../schema';
 import { subDays } from 'date-fns';
 
+/** All values a user can record for one day; only `weightKg` is required. */
+export interface MeasurementInput {
+  weightKg: number;
+  fatPercent?: number | null;
+  muscleMassKg?: number | null;
+  boneMassKg?: number | null;
+  bmrKcal?: number | null;
+}
+
+function normalize(input: MeasurementInput) {
+  return {
+    weightKg: input.weightKg,
+    fatPercent: input.fatPercent ?? null,
+    muscleMassKg: input.muscleMassKg ?? null,
+    boneMassKg: input.boneMassKg ?? null,
+    bmrKcal: input.bmrKcal ?? null,
+  };
+}
+
 export async function addMeasurement(
   date: string,
-  weightKg: number,
-  fatPercent?: number
+  input: MeasurementInput
 ): Promise<BodyMeasurement> {
   const rows = await db
     .insert(bodyMeasurement)
     .values({
       id: newId(),
       date,
-      weightKg,
-      fatPercent: fatPercent ?? null,
+      ...normalize(input),
       createdAt: nowIso(),
       ...auditInsert(),
     })
@@ -29,15 +46,21 @@ export async function getMeasurement(date: string): Promise<BodyMeasurement | un
   return rows[0];
 }
 
-export async function updateMeasurement(
+export async function updateMeasurement(date: string, input: MeasurementInput): Promise<void> {
+  await db.update(bodyMeasurement).set(normalize(input)).where(eq(bodyMeasurement.date, date));
+}
+
+/** One measurement per day: update the existing row for `date` or insert a new one. */
+export async function upsertMeasurement(
   date: string,
-  weightKg: number,
-  fatPercent?: number
-): Promise<void> {
-  await db
-    .update(bodyMeasurement)
-    .set({ weightKg, fatPercent: fatPercent ?? null })
-    .where(eq(bodyMeasurement.date, date));
+  input: MeasurementInput
+): Promise<BodyMeasurement> {
+  const existing = await getMeasurement(date);
+  if (existing) {
+    await updateMeasurement(date, input);
+    return { ...existing, ...normalize(input) };
+  }
+  return addMeasurement(date, input);
 }
 
 export async function deleteMeasurement(date: string): Promise<void> {

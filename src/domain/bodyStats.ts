@@ -13,6 +13,9 @@ export interface BodyStats {
   current?: {
     weightKg: number;
     fatPercent: number | null;
+    muscleMassKg: number | null;
+    boneMassKg: number | null;
+    bmrKcal: number | null;
     date: string;
   };
   trend: WeightTrend[]; // last 30 days, ascending
@@ -71,6 +74,9 @@ export function bodyStatsFrom(measurements: BodyMeasurement[]): BodyStats {
     current: {
       weightKg: current.weightKg,
       fatPercent: current.fatPercent,
+      muscleMassKg: current.muscleMassKg,
+      boneMassKg: current.boneMassKg,
+      bmrKcal: current.bmrKcal,
       date: current.date,
     },
     trend,
@@ -79,6 +85,21 @@ export function bodyStatsFrom(measurements: BodyMeasurement[]): BodyStats {
     trend30dChangePercent: trend30ChangePercent,
     monthlyAverage: monthAvg,
   };
+}
+
+/** Body-Mass-Index from weight (kg) and height (cm); null if height is missing/invalid. */
+export function bmiFrom(weightKg: number, heightCm: number | null | undefined): number | null {
+  if (!heightCm || heightCm <= 0) return null;
+  const m = heightCm / 100;
+  return weightKg / (m * m);
+}
+
+/** WHO weight-status band for a BMI value. */
+export function bmiCategory(bmi: number): 'underweight' | 'normal' | 'overweight' | 'obese' {
+  if (bmi < 18.5) return 'underweight';
+  if (bmi < 25) return 'normal';
+  if (bmi < 30) return 'overweight';
+  return 'obese';
 }
 
 export function formatWeightChange(changeKg: number, changePercent: number): string {

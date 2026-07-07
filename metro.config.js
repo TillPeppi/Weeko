@@ -3,7 +3,27 @@ const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
-// expo-sqlite on web ships a wasm build (OPFS/SharedArrayBuffer)
+// PowerSync (native) — disable inline requires for @powersync/react-native to
+// avoid "Super expression must either be null or a function" (docs/POWERSYNC_SETUP.md).
+config.transformer = config.transformer || {};
+const prevGetTransformOptions = config.transformer.getTransformOptions;
+config.transformer.getTransformOptions = async (...args) => {
+  const base = prevGetTransformOptions ? await prevGetTransformOptions(...args) : {};
+  return {
+    ...base,
+    transform: {
+      ...(base.transform || {}),
+      inlineRequires: {
+        blockList: {
+          ...((base.transform && base.transform.inlineRequires && base.transform.inlineRequires.blockList) || {}),
+          [require.resolve('@powersync/react-native')]: true,
+        },
+      },
+    },
+  };
+};
+
+// wa-sqlite (PowerSync web + expo-sqlite) ships a wasm build (OPFS/SharedArrayBuffer)
 config.resolver.assetExts.push('wasm');
 
 // SharedArrayBuffer (needed by wa-sqlite on web) requires cross-origin isolation

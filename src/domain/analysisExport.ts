@@ -52,6 +52,9 @@ export interface ExportMeasurement {
   date: string;
   weightKg: number;
   fatPercent: number | null;
+  muscleMassKg: number | null;
+  boneMassKg: number | null;
+  bmrKcal: number | null;
 }
 
 export interface ExportTask {

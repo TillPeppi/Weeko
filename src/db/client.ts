@@ -1,41 +1,32 @@
 /**
- * SQLite via expo-sqlite + Drizzle. Works on iOS/Android natively and on web
- * through the wa-sqlite/OPFS wasm build (requires the COEP/COOP headers set in
- * metro.config.js — see docs/ARCHITECTURE.md).
+ * Database client — PowerSync is the local SQLite (docs/POWERSYNC_SETUP.md).
+ * PowerSync manages the local schema from src/db/powersync/schema.ts (every table
+ * keyed by text `id`); Drizzle queries go through the PowerSync driver. Works on
+ * iOS/Android natively and on web via wa-sqlite/OPFS (needs the COEP/COOP headers
+ * in metro.config.js + `powersync-web copy-assets`, see the setup doc).
  *
- * The database MUST be opened asynchronously on web: a synchronous top-level
- * open races against the SQLite worker becoming ready ("Sync operation
- * timeout"). The root layout awaits initDb() before rendering anything that
- * touches the DB; `db`/`expoDb` are proxies that throw when used earlier.
+ * `db` is a lazy proxy: PowerSync is only opened on first actual query, never at
+ * import time — so the web static-render pass (which imports repos but runs no
+ * effects) doesn't try to open SQLite.
  */
-import { drizzle, type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite';
-import { openDatabaseAsync, openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
-import { Platform } from 'react-native';
-import * as schema from './schema';
+import { getPowerSync, getSyncDb } from './powersync/system';
 
-let rawDb: SQLiteDatabase | null = null;
-let dbInstance: ExpoSQLiteDatabase<typeof schema> | null = null;
+type Db = ReturnType<typeof getSyncDb>;
 
+export const db = new Proxy({} as Db, {
+  get(_, prop) {
+    const target = getSyncDb() as unknown as Record<string | symbol, unknown>;
+    const value = target[prop];
+    return typeof value === 'function'
+      ? (value as (...a: unknown[]) => unknown).bind(target)
+      : value;
+  },
+});
+
+/** Opens/initializes the PowerSync database. Awaited in the root layout. */
 export async function initDb(): Promise<void> {
-  if (dbInstance) return;
-  rawDb =
-    Platform.OS === 'web' ? await openDatabaseAsync('weeko.db') : openDatabaseSync('weeko.db');
-  dbInstance = drizzle(rawDb, { schema });
+  await getPowerSync().init();
 }
-
-function guard<T extends object>(instance: () => T | null, name: string): T {
-  return new Proxy({} as T, {
-    get(_, prop) {
-      const target = instance();
-      if (!target) throw new Error(`${name} not initialized — call initDb() first`);
-      const value = Reflect.get(target, prop) as unknown;
-      return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(target) : value;
-    },
-  });
-}
-
-export const db = guard<ExpoSQLiteDatabase<typeof schema>>(() => dbInstance, 'db');
-export const expoDb = guard<SQLiteDatabase>(() => rawDb, 'expoDb');
 
 export function nowIso(): string {
   return new Date().toISOString();

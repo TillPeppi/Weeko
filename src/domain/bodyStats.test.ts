@@ -12,7 +12,7 @@ describe('bodyStats', () => {
 
   it('bodyStatsFrom: single measurement', () => {
     const stats = bodyStatsFrom([
-      { id: '1', date: '2024-01-01', weightKg: 75, fatPercent: 15, createdAt: '2024-01-01T00:00:00Z', userId: null, updatedAt: null },
+      { id: '1', date: '2024-01-01', weightKg: 75, fatPercent: 15, muscleMassKg: null, boneMassKg: null, bmrKcal: null, createdAt: '2024-01-01T00:00:00Z', userId: null, updatedAt: null },
     ]);
     expect(stats.current?.weightKg).toBe(75);
     expect(stats.current?.fatPercent).toBe(15);
@@ -23,9 +23,9 @@ describe('bodyStats', () => {
 
   it('bodyStatsFrom: multi-day trend', () => {
     const stats = bodyStatsFrom([
-      { id: '1', date: '2024-01-01', weightKg: 75, fatPercent: 16, createdAt: '2024-01-01T00:00:00Z', userId: null, updatedAt: null },
-      { id: '2', date: '2024-01-08', weightKg: 74.5, fatPercent: 15.5, createdAt: '2024-01-08T00:00:00Z', userId: null, updatedAt: null },
-      { id: '3', date: '2024-01-15', weightKg: 73.8, fatPercent: 15, createdAt: '2024-01-15T00:00:00Z', userId: null, updatedAt: null },
+      { id: '1', date: '2024-01-01', weightKg: 75, fatPercent: 16, muscleMassKg: null, boneMassKg: null, bmrKcal: null, createdAt: '2024-01-01T00:00:00Z', userId: null, updatedAt: null },
+      { id: '2', date: '2024-01-08', weightKg: 74.5, fatPercent: 15.5, muscleMassKg: null, boneMassKg: null, bmrKcal: null, createdAt: '2024-01-08T00:00:00Z', userId: null, updatedAt: null },
+      { id: '3', date: '2024-01-15', weightKg: 73.8, fatPercent: 15, muscleMassKg: null, boneMassKg: null, bmrKcal: null, createdAt: '2024-01-15T00:00:00Z', userId: null, updatedAt: null },
     ]);
     expect(stats.current?.weightKg).toBe(73.8);
     expect(stats.trend).toHaveLength(3);
@@ -41,6 +41,9 @@ describe('bodyStats', () => {
       date: `2024-01-${String(i + 1).padStart(2, '0')}`,
       weightKg: 75 - i * 0.05,
       fatPercent: 16 - i * 0.02,
+      muscleMassKg: null,
+      boneMassKg: null,
+      bmrKcal: null,
       createdAt: `2024-01-${String(i + 1).padStart(2, '0')}T00:00:00Z`,
       userId: null,
       updatedAt: null,

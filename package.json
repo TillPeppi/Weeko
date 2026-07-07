@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.1",
-    "@journeyapps/react-native-quick-sqlite": "^2.5.2",
     "@kingstinct/react-native-healthkit": "^14.0.2",
+    "@op-engineering/op-sqlite": "^15.2.14",
     "@powersync/drizzle-driver": "^0.7.4",
+    "@powersync/op-sqlite": "^0.9.13",
     "@powersync/react": "^1.10.0",
     "@powersync/react-native": "^1.35.7",
     "@powersync/web": "^1.38.6",
@@ -68,14 +69,15 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web",
+    "web": "powersync-web copy-assets && expo start --web --port 8090",
     "lint": "expo lint",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "schema:docs": "tsx scripts/generate-week-schema.ts",
-    "postinstall": "patch-package"
+    "powersync:assets": "powersync-web copy-assets",
+    "postinstall": "patch-package && powersync-web copy-assets"
   },
   "private": true
 }
