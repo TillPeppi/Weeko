@@ -1,22 +1,22 @@
 /**
- * Body-composition tab: record and update weight, body fat, muscle mass,
+ * Body-composition screen: record and update weight, body fat, muscle mass,
  * bone mass and basal metabolic rate (Grundumsatz) per day. BMI is derived
- * from the entered weight and the profile height. One measurement per date
- * (upsert); tapping a history entry loads it for editing.
+ * from the entered weight and the profile height. Reached from the Today
+ * header; stack screen like Settings/Stats. One measurement per date (upsert);
+ * tapping a history entry loads it for editing.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { Pressable, View } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from 'nativewind';
 import { format, parseISO } from 'date-fns';
-import { Trash2 } from 'lucide-react-native';
+import { Trash2, X } from 'lucide-react-native';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Body, Label, Muted, SectionTitle, TABULAR, Title } from '@/components/ui/Text';
-import { Pressable } from 'react-native';
 import { uiColor } from '@/constants/uiColors';
 import {
   deleteMeasurement,
@@ -59,17 +59,15 @@ export default function BodyScreen() {
     setHistory(await listMeasurements(365));
   }, []);
 
-  // Reload whenever the tab gains focus (e.g. after editing the profile height).
-  useFocusEffect(
-    useCallback(() => {
-      void getProfile().then((p) => setHeightCm(p?.heightCm ?? null));
-      void reload();
-    }, [reload])
-  );
-
   useEffect(() => {
     void getProfile().then((p) => setHeightCm(p?.heightCm ?? null));
-  }, []);
+    void reload();
+  }, [reload]);
+
+  const close = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
 
   const weightKg = num(form.weight);
   const weightValid = weightKg !== null && weightKg > 0;
@@ -125,7 +123,17 @@ export default function BodyScreen() {
 
   return (
     <Screen>
-      <Title>{t('bodyLog.title')}</Title>
+      <View className="flex-row items-center justify-between">
+        <Title>{t('bodyLog.title')}</Title>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+          onPress={close}
+          className="p-2 active:opacity-60"
+        >
+          <X size={22} color={uiColor('muted', dark)} />
+        </Pressable>
+      </View>
       <Muted className="mt-0.5">{t('bodyLog.subtitle')}</Muted>
 
       <Card className="mt-4">

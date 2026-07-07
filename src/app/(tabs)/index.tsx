@@ -9,7 +9,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from 'nativewind';
 import { format } from 'date-fns';
-import { ChartColumn, Check, Circle, Play, Settings } from 'lucide-react-native';
+import { ChartColumn, Check, Circle, Play, Scale, Settings } from 'lucide-react-native';
 import { Screen } from '@/components/Screen';
 import { CoachCard } from '@/components/coach/CoachCard';
 import { BodyLevelCard } from '@/components/health/BodyLevelCard';
@@ -121,6 +121,14 @@ export default function TodayScreen() {
               {nowTime}
             </Text>
           </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('bodyLog.title')}
+            onPress={() => router.push('/body')}
+            className="p-1.5 active:opacity-60"
+          >
+            <Scale size={20} color={uiColor('muted', dark)} />
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('stats.title')}

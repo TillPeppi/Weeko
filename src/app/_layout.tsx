@@ -95,6 +95,7 @@ export default function RootLayout() {
           <Stack.Screen name="food/add" options={{ presentation: 'modal' }} />
           <Stack.Screen name="settings" />
           <Stack.Screen name="stats" />
+          <Stack.Screen name="body" />
           <Stack.Screen name="export" />
           <Stack.Screen name="session/[id]" />
         </Stack>
