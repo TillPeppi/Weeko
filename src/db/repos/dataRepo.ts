@@ -4,7 +4,7 @@
  * domain/analysisExport.ts). Data never leaves the device unless the user
  * explicitly exports.
  */
-import { and, asc, eq, gte, inArray, lt, lte, ne, or } from 'drizzle-orm';
+import { and, asc, count, eq, gte, inArray, lt, lte, ne, or } from 'drizzle-orm';
 import { db } from '../client';
 import {
   block,
@@ -190,9 +190,67 @@ export async function collectAnalysisRange(start: string, end: string): Promise<
   };
 }
 
+/** Row counts per deletable category — lets the UI show sizes and hide empty ones. */
+export interface DataCounts {
+  body: number;
+  training: number;
+  food: number;
+  plan: number;
+  tasks: number;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function rowCount(table: any): Promise<number> {
+  const rows = await db.select({ n: count() }).from(table);
+  return Number(rows[0]?.n ?? 0);
+}
+
+export async function dataCounts(): Promise<DataCounts> {
+  const [body, sessions, food, weeks, tasks] = await Promise.all([
+    rowCount(bodyMeasurement),
+    rowCount(workoutSession),
+    rowCount(foodEntry),
+    rowCount(week),
+    rowCount(task),
+  ]);
+  return { body, training: sessions, food, plan: weeks, tasks };
+}
+
+/** Delete only body-composition measurements (weight/fat/muscle/…). */
+export async function deleteBodyMeasurements(): Promise<void> {
+  await db.delete(bodyMeasurement);
+}
+
+/** Delete logged training: sets first (FK), then sessions. Keeps the exercise catalog. */
+export async function deleteTrainingLogs(): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(setLog);
+    await tx.delete(workoutSession);
+  });
+}
+
+/** Delete nutrition diary entries. Keeps the cached/custom product list. */
+export async function deleteFoodEntries(): Promise<void> {
+  await db.delete(foodEntry);
+}
+
+/** Delete the week plan: blocks first (belong to weeks), then weeks. Keeps templates. */
+export async function deletePlanData(): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(block);
+    await tx.delete(week);
+  });
+}
+
+/** Delete standalone tasks. */
+export async function deleteTasks(): Promise<void> {
+  await db.delete(task);
+}
+
 /** Deletes ALL user data (irreversible). Caller must confirm with the user. */
 export async function deleteAllData(): Promise<void> {
   await db.transaction(async (tx) => {
+    await tx.delete(bodyMeasurement);
     await tx.delete(coachDismissal);
     await tx.delete(foodEntry);
     await tx.delete(foodProduct);

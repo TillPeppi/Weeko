@@ -637,7 +637,19 @@
       "deleteAll": "Alle Daten löschen",
       "deleteConfirmTitle": "Wirklich alles löschen?",
       "deleteConfirmMessage": "Alle Wochen, Aufgaben, Trainings und Einstellungen werden unwiderruflich gelöscht.",
-      "deleted": "Alle Daten gelöscht"
+      "deleted": "Alle Daten gelöscht",
+      "deleteSelective": "Bestimmte Daten löschen",
+      "deleteSelectiveHint": "Entfernt nur die gewählte Kategorie — auch aus der Cloud. Der Rest bleibt erhalten.",
+      "categories": {
+        "body": "Körperdaten",
+        "training": "Trainings",
+        "food": "Ernährung",
+        "plan": "Plan & Wochen",
+        "tasks": "Aufgaben"
+      },
+      "deleteCategoryTitle": "{{name}} löschen?",
+      "deleteCategoryMessage": "„{{name}}“ wird endgültig entfernt — auch aus der Cloud. Andere Daten bleiben unberührt.",
+      "categoryDeleted": "{{name}} gelöscht"
     },
     "account": {
       "title": "Konto",

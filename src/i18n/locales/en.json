@@ -637,7 +637,19 @@
       "deleteAll": "Delete all data",
       "deleteConfirmTitle": "Really delete everything?",
       "deleteConfirmMessage": "All weeks, tasks, workouts and settings will be permanently deleted.",
-      "deleted": "All data deleted"
+      "deleted": "All data deleted",
+      "deleteSelective": "Delete specific data",
+      "deleteSelectiveHint": "Removes only the chosen category — from the cloud too. Everything else stays.",
+      "categories": {
+        "body": "Body data",
+        "training": "Training",
+        "food": "Nutrition",
+        "plan": "Plan & weeks",
+        "tasks": "Tasks"
+      },
+      "deleteCategoryTitle": "Delete {{name}}?",
+      "deleteCategoryMessage": "“{{name}}” will be permanently removed — from the cloud too. Other data is untouched.",
+      "categoryDeleted": "{{name}} deleted"
     },
     "account": {
       "title": "Account",

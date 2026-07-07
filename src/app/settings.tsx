@@ -26,7 +26,17 @@ import { isAuthConfigured } from '@/auth/supabase';
 import { getWeeklyStructure, saveWeeklyStructure } from '@/db/repos/structureRepo';
 import { getProfile, upsertProfile } from '@/db/repos/profileRepo';
 import { listNotificationPrefs, upsertNotificationPref } from '@/db/repos/notificationRepo';
-import { exportAllData, deleteAllData } from '@/db/repos/dataRepo';
+import {
+  exportAllData,
+  deleteAllData,
+  dataCounts,
+  deleteBodyMeasurements,
+  deleteTrainingLogs,
+  deleteFoodEntries,
+  deletePlanData,
+  deleteTasks,
+  type DataCounts,
+} from '@/db/repos/dataRepo';
 import { seedDemoData } from '@/db/devSeed';
 import { bootstrapDefaults } from '@/db/bootstrap';
 import type { NotificationPref } from '@/db/schema';
@@ -43,6 +53,17 @@ interface GoalsDraft {
 }
 
 const emptyGoals: GoalsDraft = { kcal: '', proteinMin: '', fiberMin: '', sugarsMax: '', saltMax: '' };
+
+type DeleteCategory = 'body' | 'training' | 'food' | 'plan' | 'tasks';
+
+/** Selective-delete categories: which repo call clears each, keyed for i18n + counts. */
+const DELETE_CATEGORIES: { key: DeleteCategory; run: () => Promise<void> }[] = [
+  { key: 'body', run: deleteBodyMeasurements },
+  { key: 'training', run: deleteTrainingLogs },
+  { key: 'food', run: deleteFoodEntries },
+  { key: 'plan', run: deletePlanData },
+  { key: 'tasks', run: deleteTasks },
+];
 
 /** Quick-pick times for the coach morning digest. */
 const DIGEST_PRESETS = [
@@ -78,10 +99,13 @@ export default function SettingsScreen() {
   const [goals, setGoals] = useState<GoalsDraft>(emptyGoals);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<DeleteCategory | null>(null);
+  const [counts, setCounts] = useState<DataCounts | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    setCounts(await dataCounts());
     setPrefs(await listNotificationPrefs());
     setStructure(await getWeeklyStructure());
     const existing = await getProfile();
@@ -142,6 +166,15 @@ export default function SettingsScreen() {
     await settings.hydrate();
     showFlash(t('settings.data.deleted'));
     router.replace('/onboarding');
+  };
+
+  const runCategoryDelete = async (category: DeleteCategory) => {
+    setPendingDelete(null);
+    const entry = DELETE_CATEGORIES.find((c) => c.key === category);
+    if (!entry) return;
+    await entry.run();
+    setCounts(await dataCounts());
+    showFlash(t('settings.data.categoryDeleted', { name: t(`settings.data.categories.${category}`) }));
   };
 
   const toggleSection = (key: string) => setExpanded(expanded === key ? null : key);
@@ -459,6 +492,23 @@ export default function SettingsScreen() {
             }}
           />
           <Muted>{t('settings.data.demoHint')}</Muted>
+
+          <Label className="mt-2">{t('settings.data.deleteSelective')}</Label>
+          {DELETE_CATEGORIES.map(({ key }) => {
+            const n = counts?.[key] ?? 0;
+            return (
+              <Button
+                key={key}
+                title={`${t(`settings.data.categories.${key}`)}${counts ? ` (${n})` : ''}`}
+                variant="secondary"
+                disabled={counts !== null && n === 0}
+                icon={<Trash2 size={18} color={uiColor('muted', dark)} />}
+                onPress={() => setPendingDelete(key)}
+              />
+            );
+          })}
+          <Muted>{t('settings.data.deleteSelectiveHint')}</Muted>
+
           <Button
             title={t('settings.data.deleteAll')}
             variant="danger"
@@ -487,6 +537,22 @@ export default function SettingsScreen() {
         destructive
         onConfirm={() => void wipe()}
         onCancel={() => setConfirmDelete(false)}
+      />
+
+      <ConfirmDialog
+        visible={pendingDelete !== null}
+        title={t('settings.data.deleteCategoryTitle', {
+          name: pendingDelete ? t(`settings.data.categories.${pendingDelete}`) : '',
+        })}
+        message={t('settings.data.deleteCategoryMessage', {
+          name: pendingDelete ? t(`settings.data.categories.${pendingDelete}`) : '',
+        })}
+        confirmLabel={t('common.delete')}
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) void runCategoryDelete(pendingDelete);
+        }}
+        onCancel={() => setPendingDelete(null)}
       />
     </Screen>
   );
