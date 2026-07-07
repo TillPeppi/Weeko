@@ -29,6 +29,46 @@ function absolute(entry: FoodEntryLike): Nutrients {
   return scaleNutrients(entry.nutrients, entry.amountG);
 }
 
+export interface DailyNutritionPoint {
+  /** YYYY-MM-DD */
+  date: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  sugars: number;
+  fiber: number;
+  salt: number;
+  saturatedFat: number;
+}
+
+/** Per-day macro totals for every day that has ≥1 entry (ascending). */
+export function dailyNutrition(entries: FoodEntryLike[]): DailyNutritionPoint[] {
+  const byDate = new Map<string, FoodEntryLike[]>();
+  for (const entry of entries) {
+    const list = byDate.get(entry.date);
+    if (list) list.push(entry);
+    else byDate.set(entry.date, [entry]);
+  }
+  const round1 = (value: number | undefined) => Math.round((value ?? 0) * 10) / 10;
+  return [...byDate.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, list]) => {
+      const total = sumNutrients(list.map(absolute));
+      return {
+        date,
+        kcal: Math.round(total.kcal ?? 0),
+        protein: Math.round(total.protein ?? 0),
+        carbs: Math.round(total.carbs ?? 0),
+        fat: Math.round(total.fat ?? 0),
+        sugars: Math.round(total.sugars ?? 0),
+        fiber: Math.round(total.fiber ?? 0),
+        salt: round1(total.salt),
+        saturatedFat: Math.round(total.saturatedFat ?? 0),
+      };
+    });
+}
+
 export interface WeeklyNutritionPoint extends IsoWeekRef {
   /** days of the week with ≥1 entry */
   trackedDays: number;

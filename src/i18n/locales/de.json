@@ -592,6 +592,13 @@
       "empty": "Noch keine Körperdaten. Trag deine Werte über das Waage-Icon (Heute-Screen) ein.",
       "points": "{{count}} Messungen · seit {{from}}",
       "needMore": "Mindestens 2 Messungen für einen Verlauf."
+    },
+    "mode": {
+      "bar": "Balken",
+      "line": "Linie",
+      "daily": "Täglich",
+      "weekly": "Wochen-Ø",
+      "monthly": "Monats-Ø"
     }
   },
   "settings": {

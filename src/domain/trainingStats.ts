@@ -66,6 +66,22 @@ export function weeklyTraining(
   });
 }
 
+/** Total training volume (Σ reps × kg of done sets) per training day, ascending. */
+export function dailyVolume(
+  sets: { date: string; reps: number | null; weightKg: number | null; done: boolean }[]
+): { date: string; value: number }[] {
+  const byDate = new Map<string, number>();
+  for (const s of sets) {
+    if (!s.done) continue;
+    const add = (s.reps ?? 0) * (s.weightKg ?? 0);
+    if (add <= 0) continue;
+    byDate.set(s.date, (byDate.get(s.date) ?? 0) + add);
+  }
+  return [...byDate.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, value]) => ({ date, value: Math.round(value * 10) / 10 }));
+}
+
 export interface TrainingStreaks {
   /** consecutive ISO weeks with ≥1 training day, ending at the current (or last) week */
   currentWeeks: number;

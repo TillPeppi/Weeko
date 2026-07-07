@@ -18,8 +18,11 @@ import {
   prSessionIds,
   type ExerciseSetRow,
 } from '@/domain/exerciseStats';
-import { avgSessionMinutes, trainingStreaks, weeklyTraining } from '@/domain/trainingStats';
-import { BarChart, StatTile } from './StatBits';
+import { avgSessionMinutes, dailyVolume, trainingStreaks, weeklyTraining } from '@/domain/trainingStats';
+import { aggregateSeries } from '@/domain/seriesAggregate';
+import { DEFAULT_STATS_MODE, type StatsMode } from '@/domain/statsMode';
+import { BarChart, StatTile, TrendChart } from './StatBits';
+import { useBucketLabel } from './StatsModeControl';
 import { dateFnsLocale } from '@/i18n';
 
 interface Props {
@@ -27,6 +30,7 @@ interface Props {
   sessions: WorkoutSession[];
   exercises: Exercise[];
   today: string;
+  mode?: StatsMode;
 }
 
 function formatVolume(volumeKg: number): string {
@@ -39,12 +43,13 @@ function formatKg(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
 
-export function TrainingStatsSection({ setRows, sessions, exercises, today }: Props) {
+export function TrainingStatsSection({ setRows, sessions, exercises, today, mode = DEFAULT_STATS_MODE }: Props) {
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const accent = uiColor('accent', dark);
   const emptyColor = dark ? '#2c2f3a' : '#e3dcc9';
+  const bucketLabel = useBucketLabel(mode.period);
 
   const sessionDates = useMemo(() => sessions.map((s) => s.startedAt.slice(0, 10)), [sessions]);
   const streaks = useMemo(() => trainingStreaks(sessionDates, today), [sessionDates, today]);
@@ -55,6 +60,11 @@ export function TrainingStatsSection({ setRows, sessions, exercises, today }: Pr
   );
   const avgSessionsPerWeek =
     Math.round((weekly.reduce((sum, w) => sum + w.sessions, 0) / weekly.length) * 10) / 10;
+
+  const volumeBuckets = useMemo(
+    () => aggregateSeries(dailyVolume(setRows), mode.period),
+    [setRows, mode.period]
+  );
 
   const exercisesWithData = useMemo(() => {
     const ids = new Set(setRows.filter((row) => row.done && row.reps).map((row) => row.exerciseId));
@@ -115,15 +125,17 @@ export function TrainingStatsSection({ setRows, sessions, exercises, today }: Pr
       <Card className="mt-4">
         <SectionTitle>{t('stats.training.volumeTitle')}</SectionTitle>
         <View className="mt-3">
-          <BarChart
+          <TrendChart
+            type={mode.type}
             emptyColor={emptyColor}
-            bars={weekly.map((week, index) => ({
-              key: `${week.year}-${week.isoWeek}`,
-              label: String(week.isoWeek),
-              value: week.volumeKg,
-              valueLabel: formatVolume(week.volumeKg),
-              color: index === weekly.length - 1 ? accent : `${accent}99`,
-              highlighted: index === weekly.length - 1,
+            color={accent}
+            bars={volumeBuckets.map((bucket, index) => ({
+              key: bucket.key,
+              label: bucketLabel(bucket.from),
+              value: bucket.value,
+              valueLabel: formatVolume(bucket.value),
+              color: index === volumeBuckets.length - 1 ? accent : `${accent}99`,
+              highlighted: index === volumeBuckets.length - 1,
             }))}
           />
         </View>

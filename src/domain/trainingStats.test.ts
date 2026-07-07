@@ -1,10 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import {
   avgSessionMinutes,
+  dailyVolume,
   trainingCounts,
   trainingStreaks,
   weeklyTraining,
 } from './trainingStats';
+
+describe('dailyVolume', () => {
+  it('sums reps × kg of done sets per day, skips undone/empty, sorts ascending', () => {
+    const out = dailyVolume([
+      { date: '2024-01-02', reps: 10, weightKg: 20, done: true }, // 200
+      { date: '2024-01-01', reps: 5, weightKg: 10, done: true }, // 50
+      { date: '2024-01-01', reps: 5, weightKg: 10, done: true }, // 50 → day total 100
+      { date: '2024-01-02', reps: 8, weightKg: 15, done: false }, // ignored (not done)
+      { date: '2024-01-03', reps: 12, weightKg: 0, done: true }, // 0 → excluded
+    ]);
+    expect(out).toEqual([
+      { date: '2024-01-01', value: 100 },
+      { date: '2024-01-02', value: 200 },
+    ]);
+  });
+});
 
 describe('trainingCounts', () => {
   // 2026-07-03 is a Friday in ISO week 27

@@ -12,14 +12,18 @@ import { uiColor } from '@/constants/uiColors';
 import type { FoodEntry } from '@/db/schema';
 import { MICRO_KEYS, type MicroKey, type NutrientTargets } from '@/domain/nutrition';
 import {
+  dailyNutrition,
   kcalBalance,
   mealDistribution,
   topFoods,
   weeklyMicros,
   weeklyNutrition,
 } from '@/domain/nutritionStats';
+import { aggregateSeries } from '@/domain/seriesAggregate';
+import { DEFAULT_STATS_MODE, type StatsMode } from '@/domain/statsMode';
 import { mondayOfWeek } from '@/domain/time';
-import { BarChart, PercentRow, StatTile } from './StatBits';
+import { PercentRow, StatTile, TrendChart } from './StatBits';
+import { useBucketLabel } from './StatsModeControl';
 
 const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -28,20 +32,26 @@ interface Props {
   entries: FoodEntry[];
   targets: NutrientTargets;
   today: string;
+  mode?: StatsMode;
 }
 
 function signed(value: number): string {
   return `${value > 0 ? '+' : ''}${value}`;
 }
 
-export function NutritionStatsSection({ entries, targets, today }: Props) {
+export function NutritionStatsSection({ entries, targets, today, mode = DEFAULT_STATS_MODE }: Props) {
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const accent = uiColor('accent', dark);
   const emptyColor = dark ? '#2c2f3a' : '#e3dcc9';
+  const bucketLabel = useBucketLabel(mode.period);
 
   const weekly = useMemo(() => weeklyNutrition(entries, today, 4), [entries, today]);
+  const kcalBuckets = useMemo(
+    () => aggregateSeries(dailyNutrition(entries).map((d) => ({ date: d.date, value: d.kcal })), mode.period),
+    [entries, mode.period]
+  );
   const balance = useMemo(() => {
     const monday = mondayOfWeek(today);
     return kcalBalance(entries.filter((e) => e.date >= monday && e.date <= today), targets.kcal);
@@ -118,21 +128,26 @@ export function NutritionStatsSection({ entries, targets, today }: Props) {
       <Card className="mt-4">
         <SectionTitle>{t('stats.food.kcalWeeklyTitle')}</SectionTitle>
         <View className="mt-3">
-          <BarChart
+          <TrendChart
+            type={mode.type}
             emptyColor={emptyColor}
-            bars={weekly.map((week, index) => ({
-              key: `${week.year}-${week.isoWeek}`,
-              label: t('stats.weekShort', { week: week.isoWeek }),
-              value: week.avgKcal,
-              valueLabel: week.avgKcal > 0 ? String(week.avgKcal) : '',
-              color:
-                week.avgKcal > targets.kcal * 1.1
-                  ? uiColor('warning', dark)
-                  : index === weekly.length - 1
-                    ? accent
-                    : `${accent}99`,
-              highlighted: index === weekly.length - 1,
-            }))}
+            color={accent}
+            bars={kcalBuckets.map((bucket, index) => {
+              const value = Math.round(bucket.value);
+              return {
+                key: bucket.key,
+                label: bucketLabel(bucket.from),
+                value,
+                valueLabel: value > 0 ? String(value) : '',
+                color:
+                  value > targets.kcal * 1.1
+                    ? uiColor('warning', dark)
+                    : index === kcalBuckets.length - 1
+                      ? accent
+                      : `${accent}99`,
+                highlighted: index === kcalBuckets.length - 1,
+              };
+            })}
           />
         </View>
         <Muted style={TABULAR} className="mt-2 text-xs">

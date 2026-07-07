@@ -1,8 +1,9 @@
 /**
  * Body-composition trends: one card per recorded metric (weight, body fat,
  * muscle mass, bone mass, basal rate) with the current value, the change since
- * the first entry and a min–max-zoomed sparkline. Shared by the Stats screen
- * (Körper tab) and the Body-data screen so both show the same graphics.
+ * the first entry and a chart. Respects the shared stats mode (bar/line ×
+ * daily/weekly-avg/monthly-avg). Shared by the Stats "Körper" tab and the
+ * Body-data screen so both show the same graphics.
  */
 import { useMemo } from 'react';
 import { View } from 'react-native';
@@ -13,7 +14,10 @@ import { Card } from '@/components/ui/Card';
 import { Body, Muted, SectionTitle, TABULAR } from '@/components/ui/Text';
 import { uiColor, type UI_COLORS } from '@/constants/uiColors';
 import { bodyMetricSeries, type BodyMetricKey, type BodyMetricSeries } from '@/domain/bodyStats';
-import { Sparkline } from './StatBits';
+import { aggregateSeries } from '@/domain/seriesAggregate';
+import { DEFAULT_STATS_MODE, type StatsMode } from '@/domain/statsMode';
+import { TrendChart } from './StatBits';
+import { useBucketLabel } from './StatsModeControl';
 import { dateFnsLocale } from '@/i18n';
 import type { BodyMeasurement } from '@/db/schema';
 
@@ -39,16 +43,29 @@ function formatValue(value: number, unit: BodyMetricSeries['unit']): string {
   return `${value.toFixed(1)} kg`;
 }
 
+function chartValueLabel(value: number, unit: BodyMetricSeries['unit']): string {
+  if (value <= 0) return '';
+  return unit === 'kcal' ? String(Math.round(value)) : String(Math.round(value * 10) / 10);
+}
+
 function formatDelta(change: number, unit: BodyMetricSeries['unit']): string {
   const sign = change > 0 ? '+' : '';
   if (unit === 'kcal') return `${sign}${Math.round(change)} kcal`;
   return `${sign}${change.toFixed(1)} ${unit === '%' ? '%' : 'kg'}`;
 }
 
-export function BodyStatsSection({ measurements }: { measurements: BodyMeasurement[] }) {
+export function BodyStatsSection({
+  measurements,
+  mode = DEFAULT_STATS_MODE,
+}: {
+  measurements: BodyMeasurement[];
+  mode?: StatsMode;
+}) {
   const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
+  const emptyColor = dark ? '#2c2f3a' : '#e3dcc9';
+  const label = useBucketLabel(mode.period);
 
   const series = useMemo(() => bodyMetricSeries(measurements), [measurements]);
   const active = series.filter((s) => s.points.length > 0);
@@ -66,6 +83,15 @@ export function BodyStatsSection({ measurements }: { measurements: BodyMeasureme
       {active.map((s) => {
         const color = uiColor(METRIC_COLOR[s.key], dark);
         const from = s.points[0].date;
+        const buckets = aggregateSeries(s.points, mode.period);
+        const bars = buckets.map((b, i) => ({
+          key: b.key,
+          label: label(b.from),
+          value: b.value,
+          valueLabel: chartValueLabel(b.value, s.unit),
+          color: i === buckets.length - 1 ? color : `${color}99`,
+          highlighted: i === buckets.length - 1,
+        }));
         return (
           <Card key={s.key} className="mt-4">
             <View className="flex-row items-start justify-between">
@@ -89,9 +115,9 @@ export function BodyStatsSection({ measurements }: { measurements: BodyMeasureme
                 ) : null}
               </View>
             </View>
-            {s.points.length > 1 ? (
+            {buckets.length > 1 ? (
               <View className="mt-3">
-                <Sparkline values={s.points.map((p) => p.value)} color={color} />
+                <TrendChart type={mode.type} bars={bars} emptyColor={emptyColor} color={color} />
               </View>
             ) : (
               <Muted className="mt-2 text-xs">{t('stats.body.needMore')}</Muted>

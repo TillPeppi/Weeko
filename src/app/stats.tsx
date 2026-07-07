@@ -21,6 +21,8 @@ import { NutritionStatsSection } from '@/components/stats/NutritionStatsSection'
 import { PlanStatsSection } from '@/components/stats/PlanStatsSection';
 import { HealthStatsSection } from '@/components/stats/HealthStatsSection';
 import { BodyStatsSection } from '@/components/stats/BodyStatsSection';
+import { StatsModeControl } from '@/components/stats/StatsModeControl';
+import { DEFAULT_STATS_MODE, type StatsMode } from '@/domain/statsMode';
 import { listDoneSessions, listStatsSetRows, type StatsSetRow } from '@/db/repos/trainingRepo';
 import { listExercises } from '@/db/repos/exerciseRepo';
 import { listEntriesBetween } from '@/db/repos/foodRepo';
@@ -46,6 +48,8 @@ export default function StatsScreen() {
   const dark = colorScheme === 'dark';
   const today = todayIso();
   const [tab, setTab] = useState<Tab>('training');
+  const [mode, setMode] = useState<StatsMode>(DEFAULT_STATS_MODE);
+  const showModeControl = tab === 'training' || tab === 'food' || tab === 'body';
 
   const [setRows, setSetRows] = useState<StatsSetRow[]>([]);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
@@ -130,6 +134,7 @@ export default function StatsScreen() {
           value={tab}
           onChange={setTab}
         />
+        {showModeControl && <StatsModeControl mode={mode} onChange={setMode} />}
       </View>
 
       <View className="pb-8">
@@ -139,13 +144,14 @@ export default function StatsScreen() {
             sessions={sessions}
             exercises={exercises}
             today={today}
+            mode={mode}
           />
         )}
         {tab === 'food' && (
-          <NutritionStatsSection entries={entries} targets={targets} today={today} />
+          <NutritionStatsSection entries={entries} targets={targets} today={today} mode={mode} />
         )}
         {tab === 'plan' && <PlanStatsSection weeks={weeks} tasks={tasks} />}
-        {tab === 'body' && <BodyStatsSection measurements={measurements} />}
+        {tab === 'body' && <BodyStatsSection measurements={measurements} mode={mode} />}
         {tab === 'health' && <HealthStatsSection supported={supported} days={healthDays} />}
       </View>
     </Screen>

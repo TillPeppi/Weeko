@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Body, Muted, TABULAR } from '@/components/ui/Text';
+import type { ChartType } from '@/domain/statsMode';
 
 /** Compact value+label tile (matches the training dashboard style). */
 export function StatTile({ value, label, sub }: { value: string; label: string; sub?: string }) {
@@ -126,6 +127,56 @@ export function Sparkline({
       />
     </Svg>
   );
+}
+
+/**
+ * Line variant of the trend chart: min–max-zoomed (so slow-moving series like
+ * weight stay legible) with first/last labels beneath. Consumes the same
+ * ChartBar[] as BarChart; the line colour comes from the last bar.
+ */
+export function LineChart({
+  bars,
+  height = 96,
+  color,
+}: {
+  bars: ChartBar[];
+  height?: number;
+  color: string;
+}) {
+  if (bars.length < 2) {
+    return <Muted className="py-4 text-center text-xs">—</Muted>;
+  }
+  const values = bars.map((b) => b.value);
+  const lineColor = bars[bars.length - 1]?.color ?? color;
+  return (
+    <View>
+      <Sparkline values={values} color={lineColor} height={height} />
+      <View className="mt-1 flex-row justify-between">
+        <Muted style={TABULAR} className="text-[10px]">
+          {bars[0].label}
+        </Muted>
+        <Muted style={TABULAR} className="text-[10px] font-bold text-accent dark:text-accent-dark">
+          {bars[bars.length - 1].valueLabel ?? bars[bars.length - 1].label}
+        </Muted>
+      </View>
+    </View>
+  );
+}
+
+/** Bar or line trend chart, chosen by `type`. Both take the same ChartBar[]. */
+export function TrendChart({
+  bars,
+  type,
+  emptyColor,
+  color,
+}: {
+  bars: ChartBar[];
+  type: ChartType;
+  emptyColor: string;
+  color: string;
+}) {
+  if (type === 'line') return <LineChart bars={bars} color={color} />;
+  return <BarChart bars={bars} emptyColor={emptyColor} />;
 }
 
 export interface StackedSegment {

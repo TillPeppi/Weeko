@@ -27,6 +27,8 @@ import {
 import { getProfile } from '@/db/repos/profileRepo';
 import { bmiCategory, bmiFrom, formatWeightChange } from '@/domain/bodyStats';
 import { BodyStatsSection } from '@/components/stats/BodyStatsSection';
+import { StatsModeControl } from '@/components/stats/StatsModeControl';
+import { DEFAULT_STATS_MODE, type StatsMode } from '@/domain/statsMode';
 import { dateFnsLocale } from '@/i18n';
 import type { BodyMeasurement } from '@/db/schema';
 
@@ -53,6 +55,7 @@ export default function BodyScreen() {
   const [heightCm, setHeightCm] = useState<number | null>(null);
   const [history, setHistory] = useState<BodyMeasurement[]>([]);
   const [saving, setSaving] = useState(false);
+  const [mode, setMode] = useState<StatsMode>(DEFAULT_STATS_MODE);
 
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
 
@@ -234,7 +237,8 @@ export default function BodyScreen() {
       {history.length > 0 ? (
         <View className="mt-6">
           <Label>{t('stats.body.title')}</Label>
-          <BodyStatsSection measurements={history} />
+          <StatsModeControl mode={mode} onChange={setMode} />
+          <BodyStatsSection measurements={history} mode={mode} />
         </View>
       ) : null}
 

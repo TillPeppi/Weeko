@@ -592,6 +592,13 @@
       "empty": "No body data yet. Add measurements via the scale icon on the Today screen.",
       "points": "{{count}} entries · since {{from}}",
       "needMore": "At least 2 entries for a trend."
+    },
+    "mode": {
+      "bar": "Bars",
+      "line": "Line",
+      "daily": "Daily",
+      "weekly": "Weekly avg",
+      "monthly": "Monthly avg"
     }
   },
   "settings": {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  dailyNutrition,
   kcalBalance,
   mealDistribution,
   topFoods,
@@ -7,6 +8,22 @@ import {
   weeklyNutrition,
   type FoodEntryLike,
 } from './nutritionStats';
+
+describe('dailyNutrition', () => {
+  it('sums per-100g nutrients scaled by amount, per day, ascending', () => {
+    const entries: FoodEntryLike[] = [
+      { date: '2024-01-02', meal: 'lunch', name: 'A', amountG: 200, nutrients: { kcal: 100, protein: 10 } },
+      { date: '2024-01-01', meal: 'breakfast', name: 'B', amountG: 100, nutrients: { kcal: 50, protein: 5 } },
+      { date: '2024-01-01', meal: 'dinner', name: 'C', amountG: 100, nutrients: { kcal: 50, protein: 5 } },
+    ];
+    const out = dailyNutrition(entries);
+    expect(out.map((d) => d.date)).toEqual(['2024-01-01', '2024-01-02']);
+    expect(out[0].kcal).toBe(100); // 50 + 50
+    expect(out[0].protein).toBe(10);
+    expect(out[1].kcal).toBe(200); // 100 kcal/100g × 200g
+    expect(out[1].protein).toBe(20);
+  });
+});
 
 const entry = (
   date: string,
