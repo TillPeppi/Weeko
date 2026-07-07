@@ -4,6 +4,7 @@
  */
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Body, Muted, TABULAR } from '@/components/ui/Text';
 
 /** Compact value+label tile (matches the training dashboard style). */
@@ -80,6 +81,50 @@ export function BarChart({ bars, height = 72, emptyColor }: { bars: ChartBar[]; 
         );
       })}
     </View>
+  );
+}
+
+/**
+ * Min–max-zoomed line chart for slow-moving series (weight, muscle, …) where a
+ * max-normalized bar chart would hide the variation. Stretches to the container
+ * width via a viewBox; the stroke stays uniform via non-scaling-stroke.
+ */
+export function Sparkline({
+  values,
+  color,
+  height = 44,
+}: {
+  values: number[];
+  color: string;
+  height?: number;
+}) {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const W = 100;
+  const H = 40;
+  const pad = 3;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * W;
+    const y = pad + (1 - (v - min) / span) * (H - 2 * pad);
+    return [x, y] as const;
+  });
+  const line = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+  const area = `${line} L${W},${H} L0,${H} Z`;
+  return (
+    <Svg width="100%" height={height} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+      <Path d={area} fill={color} opacity={0.12} />
+      <Path
+        d={line}
+        stroke={color}
+        strokeWidth={2}
+        fill="none"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </Svg>
   );
 }
 

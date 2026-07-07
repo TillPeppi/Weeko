@@ -26,6 +26,7 @@ import {
 } from '@/db/repos/bodyRepo';
 import { getProfile } from '@/db/repos/profileRepo';
 import { bmiCategory, bmiFrom, formatWeightChange } from '@/domain/bodyStats';
+import { BodyStatsSection } from '@/components/stats/BodyStatsSection';
 import { dateFnsLocale } from '@/i18n';
 import type { BodyMeasurement } from '@/db/schema';
 
@@ -229,6 +230,13 @@ export default function BodyScreen() {
           </View>
         </View>
       </Card>
+
+      {history.length > 0 ? (
+        <View className="mt-6">
+          <Label>{t('stats.body.title')}</Label>
+          <BodyStatsSection measurements={history} />
+        </View>
+      ) : null}
 
       <View className="mt-6">
         <Label>{t('bodyLog.history')}</Label>

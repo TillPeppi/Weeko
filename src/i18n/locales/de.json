@@ -585,6 +585,13 @@
       "avgWeight30d": "Ø 30 Tage",
       "change30d": "30-Tage-Trend",
       "fatPercent": "Körperfett"
+    },
+    "body": {
+      "tab": "Körper",
+      "title": "Körper-Verlauf",
+      "empty": "Noch keine Körperdaten. Trag deine Werte über das Waage-Icon (Heute-Screen) ein.",
+      "points": "{{count}} Messungen · seit {{from}}",
+      "needMore": "Mindestens 2 Messungen für einen Verlauf."
     }
   },
   "settings": {

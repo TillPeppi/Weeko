@@ -585,6 +585,13 @@
       "avgWeight30d": "Avg 30 days",
       "change30d": "30-day trend",
       "fatPercent": "Body fat"
+    },
+    "body": {
+      "tab": "Body",
+      "title": "Body trends",
+      "empty": "No body data yet. Add measurements via the scale icon on the Today screen.",
+      "points": "{{count}} entries · since {{from}}",
+      "needMore": "At least 2 entries for a trend."
     }
   },
   "settings": {

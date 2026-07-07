@@ -87,6 +87,57 @@ export function bodyStatsFrom(measurements: BodyMeasurement[]): BodyStats {
   };
 }
 
+export type BodyMetricKey = 'weight' | 'fat' | 'muscle' | 'bone' | 'bmr';
+
+export interface BodyMetricPoint {
+  date: string; // YYYY-MM-DD
+  value: number;
+}
+
+export interface BodyMetricSeries {
+  key: BodyMetricKey;
+  unit: 'kg' | '%' | 'kcal';
+  /** ascending by date, only entries where the metric was recorded */
+  points: BodyMetricPoint[];
+  current: number | null;
+  first: number | null;
+  /** current − first (progress over the recorded span); null if < 1 point */
+  change: number | null;
+}
+
+const METRIC_DEFS: { key: BodyMetricKey; unit: 'kg' | '%' | 'kcal'; pick: (m: BodyMeasurement) => number | null }[] = [
+  { key: 'weight', unit: 'kg', pick: (m) => m.weightKg },
+  { key: 'fat', unit: '%', pick: (m) => m.fatPercent },
+  { key: 'muscle', unit: 'kg', pick: (m) => m.muscleMassKg },
+  { key: 'bone', unit: 'kg', pick: (m) => m.boneMassKg },
+  { key: 'bmr', unit: 'kcal', pick: (m) => m.bmrKcal },
+];
+
+/**
+ * One time series per body metric, for charting. Metrics with no recorded
+ * values yield an empty `points` array (callers can skip them).
+ */
+export function bodyMetricSeries(measurements: BodyMeasurement[]): BodyMetricSeries[] {
+  const sorted = [...measurements].sort((a, b) => a.date.localeCompare(b.date));
+  return METRIC_DEFS.map(({ key, unit, pick }) => {
+    const points: BodyMetricPoint[] = [];
+    for (const m of sorted) {
+      const value = pick(m);
+      if (value != null) points.push({ date: m.date, value });
+    }
+    const first = points.length ? points[0].value : null;
+    const current = points.length ? points[points.length - 1].value : null;
+    return {
+      key,
+      unit,
+      points,
+      first,
+      current,
+      change: first != null && current != null ? current - first : null,
+    };
+  });
+}
+
 /** Body-Mass-Index from weight (kg) and height (cm); null if height is missing/invalid. */
 export function bmiFrom(weightKg: number, heightCm: number | null | undefined): number | null {
   if (!heightCm || heightCm <= 0) return null;

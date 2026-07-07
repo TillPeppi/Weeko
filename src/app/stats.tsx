@@ -20,9 +20,11 @@ import { TrainingStatsSection } from '@/components/stats/TrainingStatsSection';
 import { NutritionStatsSection } from '@/components/stats/NutritionStatsSection';
 import { PlanStatsSection } from '@/components/stats/PlanStatsSection';
 import { HealthStatsSection } from '@/components/stats/HealthStatsSection';
+import { BodyStatsSection } from '@/components/stats/BodyStatsSection';
 import { listDoneSessions, listStatsSetRows, type StatsSetRow } from '@/db/repos/trainingRepo';
 import { listExercises } from '@/db/repos/exerciseRepo';
 import { listEntriesBetween } from '@/db/repos/foodRepo';
+import { listMeasurements } from '@/db/repos/bodyRepo';
 import { listWeeksWithBlocks, type WeekWithBlocks } from '@/db/repos/weekRepo';
 import { listTasks } from '@/db/repos/taskRepo';
 import { getProfile } from '@/db/repos/profileRepo';
@@ -30,9 +32,9 @@ import { healthSupported, loadHealthRange } from '@/health/healthData';
 import { dailyTargets, type NutrientTargets } from '@/domain/nutrition';
 import { addDaysIso } from '@/domain/time';
 import type { HealthDay } from '@/domain/healthStats';
-import type { Exercise, FoodEntry, Task, WorkoutSession } from '@/db/schema';
+import type { BodyMeasurement, Exercise, FoodEntry, Task, WorkoutSession } from '@/db/schema';
 
-type Tab = 'training' | 'food' | 'plan' | 'health';
+type Tab = 'training' | 'food' | 'plan' | 'body' | 'health';
 
 function todayIso(): string {
   return format(new Date(), 'yyyy-MM-dd');
@@ -53,6 +55,7 @@ export default function StatsScreen() {
   const [weeks, setWeeks] = useState<WeekWithBlocks[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [healthDays, setHealthDays] = useState<HealthDay[]>([]);
+  const [measurements, setMeasurements] = useState<BodyMeasurement[]>([]);
   const supported = healthSupported();
 
   const loadTraining = useCallback(async () => {
@@ -88,12 +91,17 @@ export default function StatsScreen() {
     setHealthDays(await loadHealthRange(dates).catch(() => []));
   }, [supported, today]);
 
+  const loadBody = useCallback(async () => {
+    setMeasurements(await listMeasurements(365));
+  }, []);
+
   useEffect(() => {
     if (tab === 'training') void loadTraining();
     else if (tab === 'food') void loadFood();
     else if (tab === 'plan') void loadPlan();
+    else if (tab === 'body') void loadBody();
     else if (tab === 'health') void loadHealth();
-  }, [tab, loadTraining, loadFood, loadPlan, loadHealth]);
+  }, [tab, loadTraining, loadFood, loadPlan, loadBody, loadHealth]);
 
   return (
     <Screen>
@@ -116,6 +124,7 @@ export default function StatsScreen() {
             { value: 'training', label: t('tabs.training') },
             { value: 'food', label: t('tabs.food') },
             { value: 'plan', label: t('tabs.week') },
+            { value: 'body', label: t('stats.body.tab') },
             { value: 'health', label: t('stats.health.tab') },
           ]}
           value={tab}
@@ -136,6 +145,7 @@ export default function StatsScreen() {
           <NutritionStatsSection entries={entries} targets={targets} today={today} />
         )}
         {tab === 'plan' && <PlanStatsSection weeks={weeks} tasks={tasks} />}
+        {tab === 'body' && <BodyStatsSection measurements={measurements} />}
         {tab === 'health' && <HealthStatsSection supported={supported} days={healthDays} />}
       </View>
     </Screen>
