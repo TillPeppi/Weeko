@@ -29,11 +29,42 @@ export function getSyncDb() {
   return drizzleDb;
 }
 
+let statusLogged = false;
+
 /** Start syncing (call when a Supabase session exists + PowerSync is configured). */
 export async function connectSync(): Promise<void> {
-  if (!isPowerSyncConfigured) return;
+  if (!isPowerSyncConfigured) {
+    console.warn('[sync] EXPO_PUBLIC_POWERSYNC_URL nicht gesetzt — Sync deaktiviert.');
+    return;
+  }
   if (!connector) connector = new SupabaseConnector();
-  await getPowerSync().connect(connector);
+  const ps = getPowerSync();
+  // Diagnostic: surface connection + up/download errors that would otherwise be
+  // invisible (the sync engine swallows them into SyncStatus).
+  if (!statusLogged) {
+    statusLogged = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ps.registerListener({
+      statusChanged: (status: any) => {
+        console.log('[sync] status', {
+          connected: status?.connected,
+          hasSynced: status?.hasSynced,
+          lastSyncedAt: status?.lastSyncedAt,
+          uploading: status?.dataFlowStatus?.uploading,
+          downloading: status?.dataFlowStatus?.downloading,
+          uploadError: status?.dataFlowStatus?.uploadError?.message,
+          downloadError: status?.dataFlowStatus?.downloadError?.message,
+        });
+      },
+    });
+  }
+  try {
+    await ps.connect(connector);
+    console.log('[sync] connect() gestartet (Endpoint aus EXPO_PUBLIC_POWERSYNC_URL).');
+  } catch (error) {
+    console.error('[sync] connect() fehlgeschlagen:', error);
+    throw error;
+  }
 }
 
 /** Stop syncing (e.g. on sign-out). */

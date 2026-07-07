@@ -59,9 +59,16 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     } catch (ex) {
       const code = (ex as { code?: string }).code;
       if (typeof code === 'string' && FATAL_RESPONSE_CODES.some((re) => re.test(code))) {
-        // permanent failure — drop the op so the queue can progress
+        // permanent failure — drop the op so the queue can progress.
+        // Logged loudly: this is how RLS/schema mismatches show up (rows silently
+        // never reach Supabase otherwise).
+        console.error('[sync] Upload PERMANENT abgelehnt — Op verworfen:', {
+          code,
+          message: (ex as Error).message,
+        });
         await transaction.complete();
       } else {
+        console.error('[sync] Upload-Fehler (wird erneut versucht):', ex);
         throw ex; // transient — retry later
       }
     }

@@ -55,7 +55,7 @@ export default function RootLayout() {
   // No-op until a PowerSync instance URL is configured.
   useEffect(() => {
     if (!ready || !isPowerSyncConfigured) return;
-    if (session) void connectSync();
+    if (session) connectSync().catch((e) => console.error('[sync] connectSync error:', e));
     else void disconnectSync();
   }, [ready, session]);
 
