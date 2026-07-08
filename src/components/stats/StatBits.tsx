@@ -2,9 +2,9 @@
  * Small shared building blocks for the statistics screen: stat tiles,
  * labeled bar charts and stacked progress bars. Pure presentation.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { Body, Muted, TABULAR } from '@/components/ui/Text';
 import type { ChartType } from '@/domain/statsMode';
 
@@ -86,53 +86,10 @@ export function BarChart({ bars, height = 72, emptyColor }: { bars: ChartBar[]; 
 }
 
 /**
- * Min–max-zoomed line chart for slow-moving series (weight, muscle, …) where a
- * max-normalized bar chart would hide the variation. Stretches to the container
- * width via a viewBox; the stroke stays uniform via non-scaling-stroke.
- */
-export function Sparkline({
-  values,
-  color,
-  height = 44,
-}: {
-  values: number[];
-  color: string;
-  height?: number;
-}) {
-  if (values.length < 2) return null;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  const W = 100;
-  const H = 40;
-  const pad = 3;
-  const pts = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * W;
-    const y = pad + (1 - (v - min) / span) * (H - 2 * pad);
-    return [x, y] as const;
-  });
-  const line = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
-  const area = `${line} L${W},${H} L0,${H} Z`;
-  return (
-    <Svg width="100%" height={height} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-      <Path d={area} fill={color} opacity={0.12} />
-      <Path
-        d={line}
-        stroke={color}
-        strokeWidth={2}
-        fill="none"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-    </Svg>
-  );
-}
-
-/**
- * Line variant of the trend chart: min–max-zoomed (so slow-moving series like
- * weight stay legible) with first/last labels beneath. Consumes the same
- * ChartBar[] as BarChart; the line colour comes from the last bar.
+ * Min–max-zoomed line chart with a visible dot per data point. Hovering (web) or
+ * tapping (mobile) a point shows a tooltip with its value + period label.
+ * Consumes the same ChartBar[] as BarChart; the line colour comes from the last
+ * bar. Uses measured pixel width (onLayout) so dots + hit areas line up exactly.
  */
 export function LineChart({
   bars,
@@ -143,20 +100,87 @@ export function LineChart({
   height?: number;
   color: string;
 }) {
+  const [width, setWidth] = useState(0);
+  const [active, setActive] = useState<number | null>(null);
+
   if (bars.length < 2) {
     return <Muted className="py-4 text-center text-xs">—</Muted>;
   }
+
   const values = bars.map((b) => b.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
   const lineColor = bars[bars.length - 1]?.color ?? color;
+
+  const padX = 8;
+  const padY = 12;
+  const px = (i: number) => padX + (i / (bars.length - 1)) * Math.max(0, width - 2 * padX);
+  const py = (v: number) => padY + (1 - (v - min) / span) * (height - 2 * padY);
+
+  const path = bars
+    .map((b, i) => `${i === 0 ? 'M' : 'L'}${px(i).toFixed(1)},${py(b.value).toFixed(1)}`)
+    .join(' ');
+  const area = `${path} L${px(bars.length - 1).toFixed(1)},${height} L${px(0).toFixed(1)},${height} Z`;
+
+  const tipW = 92;
+  const tipLeft = active === null ? 0 : Math.min(Math.max(px(active) - tipW / 2, 0), Math.max(0, width - tipW));
+
   return (
     <View>
-      <Sparkline values={values} color={lineColor} height={height} />
+      <View style={{ height }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        {width > 0 && (
+          <>
+            <Svg width={width} height={height}>
+              <Path d={area} fill={lineColor} opacity={0.12} />
+              <Path d={path} stroke={lineColor} strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+              {bars.map((b, i) => (
+                <Circle
+                  key={b.key}
+                  cx={px(i)}
+                  cy={py(b.value)}
+                  r={active === i ? 4.5 : 2.5}
+                  fill={lineColor}
+                />
+              ))}
+            </Svg>
+            {/* transparent hit areas: hover (web) / tap (mobile) selects a point */}
+            {bars.map((b, i) => {
+              const half = Math.max(12, width / bars.length / 2);
+              return (
+                <Pressable
+                  key={b.key}
+                  onHoverIn={() => setActive(i)}
+                  onHoverOut={() => setActive(null)}
+                  onPressIn={() => setActive(i)}
+                  onPressOut={() => setActive(null)}
+                  style={{ position: 'absolute', top: 0, bottom: 0, left: px(i) - half, width: half * 2 }}
+                />
+              );
+            })}
+            {active !== null && (
+              <View
+                pointerEvents="none"
+                style={{ position: 'absolute', left: tipLeft, top: Math.max(0, py(bars[active].value) - 40), width: tipW }}
+                className="items-center rounded-lg border-2 border-border dark:border-border-dark bg-card dark:bg-card-dark px-2 py-1"
+              >
+                <Body style={TABULAR} className="text-xs font-bold">
+                  {bars[active].valueLabel || String(Math.round(bars[active].value))}
+                </Body>
+                <Muted style={TABULAR} className="text-[10px]">
+                  {bars[active].label}
+                </Muted>
+              </View>
+            )}
+          </>
+        )}
+      </View>
       <View className="mt-1 flex-row justify-between">
         <Muted style={TABULAR} className="text-[10px]">
           {bars[0].label}
         </Muted>
-        <Muted style={TABULAR} className="text-[10px] font-bold text-accent dark:text-accent-dark">
-          {bars[bars.length - 1].valueLabel ?? bars[bars.length - 1].label}
+        <Muted style={TABULAR} className="text-[10px]">
+          {bars[bars.length - 1].label}
         </Muted>
       </View>
     </View>
