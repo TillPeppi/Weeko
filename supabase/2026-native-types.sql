@@ -1,6 +1,12 @@
 -- Weeko: Spalten auf native Postgres-Typen ziehen (PowerSync-Altlast: bool als
--- integer, JSON als text). Einmalig im Supabase SQL-Editor ausführen.
--- Sicher auf leeren Tabellen. Danach liefert supabase-js boolean/JSON direkt.
+-- integer, JSON als text) + fehlende Spalten nachziehen + GRANTs.
+-- Einmalig im Supabase SQL-Editor ausführen. Sicher auf leeren Tabellen.
+
+-- Körperdaten: neuere Messwerte nachziehen (falls DB vor deren Einführung erstellt).
+alter table public.body_measurement add column if not exists muscle_mass_kg double precision;
+alter table public.body_measurement add column if not exists bone_mass_kg double precision;
+alter table public.body_measurement add column if not exists bmr_kcal double precision;
+
 
 -- Booleans: integer(0/1) -> boolean
 alter table public.profile          alter column onboarding_done drop default;
