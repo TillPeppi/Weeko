@@ -24,10 +24,25 @@ export function nowIso(): string {
 const toCamel = (s: string): string => s.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 const toSnake = (s: string): string => s.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
-/** DB row (snake_case) → app object (camelCase). Native types pass through. */
+// JSON columns may come back as a parsed object (jsonb) or as a JSON string
+// (text column) depending on how the table was created. Normalize to the parsed
+// value so the app always gets objects/arrays. A non-JSON string (e.g. a title
+// that happens to start with "[") fails to parse and is kept as-is.
+function parseMaybeJson(value: unknown): unknown {
+  if (typeof value !== 'string' || value.length < 2) return value;
+  const first = value[0];
+  if (first !== '{' && first !== '[') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+/** DB row (snake_case) → app object (camelCase); parses JSON-string columns. */
 export function fromRow<T>(row: Record<string, unknown>): T {
   const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(row)) out[toCamel(k)] = v;
+  for (const [k, v] of Object.entries(row)) out[toCamel(k)] = parseMaybeJson(v);
   return out as T;
 }
 
