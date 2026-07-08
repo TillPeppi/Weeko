@@ -88,7 +88,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   setOnboardingDone: async (onboardingDone) => {
+    // Local state first so the UI never blocks; cloud persist is best-effort.
     set({ onboardingDone });
-    await upsertProfile({ onboardingDone });
+    try {
+      await upsertProfile({ onboardingDone });
+    } catch (error) {
+      console.error('[settings] onboardingDone konnte nicht gespeichert werden:', error);
+    }
   },
 }));

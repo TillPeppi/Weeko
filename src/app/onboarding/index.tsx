@@ -69,7 +69,12 @@ export default function OnboardingScreen() {
   };
 
   const finish = async () => {
-    await settings.setOnboardingDone(true);
+    // Never trap the user on onboarding: persist best-effort, always enter the app.
+    try {
+      await settings.setOnboardingDone(true);
+    } catch (error) {
+      console.error('[onboarding] Status konnte nicht gespeichert werden:', error);
+    }
     router.replace('/');
   };
 
