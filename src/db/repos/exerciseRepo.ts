@@ -1,28 +1,31 @@
-import { asc, eq } from 'drizzle-orm';
-import { db } from '../client';
 import { newId } from '../id';
-import { auditInsert } from '../audit';
-import { equipment, exercise, type Equipment, type Exercise } from '../schema';
+import { insertRow, insertRows, nowIso, sb, selectRows, toRow } from '../sb';
+import { type Equipment, type Exercise } from '../schema';
 import type { ExerciseSeed } from '../seeds';
 
 export async function listEquipment(): Promise<Equipment[]> {
-  return db.select().from(equipment).orderBy(asc(equipment.name));
+  return selectRows<Equipment>('equipment', (q) => q.order('name', { ascending: true }));
 }
 
 export async function listExercises(): Promise<Exercise[]> {
-  return db.select().from(exercise).orderBy(asc(exercise.name));
+  return selectRows<Exercise>('exercise', (q) => q.order('name', { ascending: true }));
 }
 
 export async function createEquipment(name: string): Promise<void> {
-  await db.insert(equipment).values({ id: newId(), name, available: true, ...auditInsert() });
+  await insertRow('equipment', { id: newId(), name, available: true, updatedAt: nowIso() });
 }
 
 export async function setEquipmentAvailable(id: string, available: boolean): Promise<void> {
-  await db.update(equipment).set({ available }).where(eq(equipment.id, id));
+  const { error } = await sb()
+    .from('equipment')
+    .update(toRow({ available, updatedAt: nowIso() }))
+    .eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteEquipment(id: string): Promise<void> {
-  await db.delete(equipment).where(eq(equipment.id, id));
+  const { error } = await sb().from('equipment').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function createExercise(values: {
@@ -30,12 +33,12 @@ export async function createExercise(values: {
   equipmentId?: string | null;
   isWeighted?: boolean;
 }): Promise<void> {
-  await db.insert(exercise).values({
+  await insertRow('exercise', {
     id: newId(),
     name: values.name,
     equipmentId: values.equipmentId ?? null,
     isWeighted: values.isWeighted ?? false,
-    ...auditInsert(),
+    updatedAt: nowIso(),
   });
 }
 
@@ -43,39 +46,47 @@ export async function updateExercise(
   id: string,
   values: Partial<Pick<Exercise, 'name' | 'equipmentId' | 'isWeighted' | 'notes'>>
 ): Promise<void> {
-  await db.update(exercise).set(values).where(eq(exercise.id, id));
+  const { error } = await sb()
+    .from('exercise')
+    .update(toRow({ ...values, updatedAt: nowIso() }))
+    .eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteExercise(id: string): Promise<void> {
-  await db.delete(exercise).where(eq(exercise.id, id));
+  const { error } = await sb().from('exercise').delete().eq('id', id);
+  if (error) throw error;
 }
 
-/** Seeds equipment + exercises together (onboarding). Skips if already present. */
+/**
+ * Seeds equipment + exercises together (onboarding). Skips if already present.
+ * No client transaction with PostgREST — inserted sequentially.
+ */
 export async function seedEquipmentAndExercises(
   equipmentSeeds: { name: string; available: boolean }[],
   exerciseSeeds: ExerciseSeed[]
 ): Promise<void> {
   const existing = await listExercises();
   if (existing.length > 0) return;
-  await db.transaction(async (tx) => {
-    const equipmentIds: string[] = [];
-    for (const seed of equipmentSeeds) {
-      const id = newId();
-      await tx.insert(equipment).values({ ...seed, id, ...auditInsert() });
-      equipmentIds.push(id);
-    }
-    for (const seed of exerciseSeeds) {
-      await tx.insert(exercise).values({
-        id: newId(),
-        name: seed.name,
-        equipmentId: seed.equipmentIndex === null ? null : equipmentIds[seed.equipmentIndex],
-        isWeighted: seed.isWeighted,
-        slug: seed.slug,
-        muscleGroup: seed.muscleGroup,
-        ...auditInsert(),
-      });
-    }
-  });
+
+  const equipmentIds: string[] = [];
+  for (const seed of equipmentSeeds) {
+    const id = newId();
+    await insertRow('equipment', { ...seed, id, updatedAt: nowIso() });
+    equipmentIds.push(id);
+  }
+  await insertRows(
+    'exercise',
+    exerciseSeeds.map((seed) => ({
+      id: newId(),
+      name: seed.name,
+      equipmentId: seed.equipmentIndex === null ? null : equipmentIds[seed.equipmentIndex],
+      isWeighted: seed.isWeighted,
+      slug: seed.slug,
+      muscleGroup: seed.muscleGroup,
+      updatedAt: nowIso(),
+    }))
+  );
 }
 
 /**
@@ -86,9 +97,7 @@ export async function seedEquipmentAndExercises(
  */
 export async function upgradeExerciseCatalog(
   exerciseSeeds: ExerciseSeed[],
-  /** slug → seed names across locales (legacy rows kept their seed-time language) */
   namesBySlug: Record<string, string[]>,
-  /** equipmentIndex → default equipment names across locales */
   equipmentNamesByIndex: string[][]
 ): Promise<void> {
   const existing = await listExercises();
@@ -105,19 +114,20 @@ export async function upgradeExerciseCatalog(
     const names = namesBySlug[seed.slug] ?? [seed.name];
     const legacy = existing.find((e) => e.slug === null && names.includes(e.name));
     if (legacy) {
-      await db
-        .update(exercise)
-        .set({ slug: seed.slug, muscleGroup: seed.muscleGroup })
-        .where(eq(exercise.id, legacy.id));
+      const { error } = await sb()
+        .from('exercise')
+        .update(toRow({ slug: seed.slug, muscleGroup: seed.muscleGroup, updatedAt: nowIso() }))
+        .eq('id', legacy.id);
+      if (error) throw error;
     } else {
-      await db.insert(exercise).values({
+      await insertRow('exercise', {
         id: newId(),
         name: seed.name,
         equipmentId: equipmentIdForIndex(seed.equipmentIndex),
         isWeighted: seed.isWeighted,
         slug: seed.slug,
         muscleGroup: seed.muscleGroup,
-        ...auditInsert(),
+        updatedAt: nowIso(),
       });
     }
   }

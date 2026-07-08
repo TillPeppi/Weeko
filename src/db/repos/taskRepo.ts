@@ -1,28 +1,35 @@
-import { and, asc, eq, isNull, or } from 'drizzle-orm';
-import { db, nowIso } from '../client';
 import { newId } from '../id';
-import { auditInsert } from '../audit';
-import { task, type Task } from '../schema';
+import { fromRow, insertRow, nowIso, sb, selectRows, toRow } from '../sb';
+import type { Task } from '../schema';
 
 export async function listTasks(): Promise<Task[]> {
-  return db.select().from(task).orderBy(asc(task.status), asc(task.windowDay), asc(task.createdAt));
+  return selectRows<Task>('task', (q) =>
+    q
+      .order('status', { ascending: true })
+      .order('window_day', { ascending: true, nullsFirst: true })
+      .order('created_at', { ascending: true })
+  );
 }
 
 export async function listOpenTasks(): Promise<Task[]> {
-  return db.select().from(task).where(eq(task.status, 'open')).orderBy(asc(task.windowDay));
+  return selectRows<Task>('task', (q) =>
+    q.eq('status', 'open').order('window_day', { ascending: true, nullsFirst: true })
+  );
 }
 
 /** Open tasks relevant today: due today, without a day, or overdue. */
 export async function listOpenTasksForDate(date: string): Promise<Task[]> {
-  const rows = await db
-    .select()
-    .from(task)
-    .where(and(eq(task.status, 'open'), or(isNull(task.windowDay), eq(task.windowDay, date))))
-    .orderBy(asc(task.windowStart));
-  const overdue = await db.select().from(task).where(eq(task.status, 'open'));
-  const overdueFiltered = overdue.filter((t) => t.windowDay !== null && t.windowDay < date);
-  const seen = new Set(rows.map((r) => r.id));
-  return [...rows, ...overdueFiltered.filter((t) => !seen.has(t.id))];
+  const todayOrUndated = await selectRows<Task>('task', (q) =>
+    q
+      .eq('status', 'open')
+      .or(`window_day.is.null,window_day.eq.${date}`)
+      .order('window_start', { ascending: true, nullsFirst: true })
+  );
+  const overdue = await selectRows<Task>('task', (q) =>
+    q.eq('status', 'open').lt('window_day', date)
+  );
+  const seen = new Set(todayOrUndated.map((r) => r.id));
+  return [...todayOrUndated, ...overdue.filter((t) => !seen.has(t.id))];
 }
 
 export async function createTask(values: {
@@ -37,7 +44,7 @@ export async function createTask(values: {
   blockId?: string | null;
 }): Promise<string> {
   const id = newId();
-  await db.insert(task).values({
+  await insertRow('task', {
     id,
     title: values.title,
     category: values.category,
@@ -49,7 +56,7 @@ export async function createTask(values: {
     weekId: values.weekId ?? null,
     blockId: values.blockId ?? null,
     createdAt: nowIso(),
-    ...auditInsert(),
+    updatedAt: nowIso(),
   });
   return id;
 }
@@ -59,15 +66,21 @@ export async function createTask(values: {
  * (daily: +1 day, weekly: +7 days on the same weekday).
  */
 export async function completeTask(id: string): Promise<void> {
-  const rows = await db.select().from(task).where(eq(task.id, id));
-  const current = rows[0];
+  const { data, error } = await sb().from('task').select('*').eq('id', id).limit(1);
+  if (error) throw error;
+  const current = data && data[0] ? fromRow<Task>(data[0]) : undefined;
   if (!current) return;
-  await db.update(task).set({ status: 'done', completedAt: nowIso() }).where(eq(task.id, id));
+
+  const upd = await sb()
+    .from('task')
+    .update(toRow({ status: 'done', completedAt: nowIso(), updatedAt: nowIso() }))
+    .eq('id', id);
+  if (upd.error) throw upd.error;
 
   if (current.recurrence !== 'none') {
     const baseDay = current.windowDay ?? new Date().toISOString().slice(0, 10);
     const nextDay = addDays(baseDay, current.recurrence === 'daily' ? 1 : 7);
-    await db.insert(task).values({
+    await insertRow('task', {
       id: newId(),
       title: current.title,
       category: current.category,
@@ -78,13 +91,17 @@ export async function completeTask(id: string): Promise<void> {
       windowEnd: current.windowEnd,
       context: current.context,
       createdAt: nowIso(),
-      ...auditInsert(),
+      updatedAt: nowIso(),
     });
   }
 }
 
 export async function reopenTask(id: string): Promise<void> {
-  await db.update(task).set({ status: 'open', completedAt: null }).where(eq(task.id, id));
+  const { error } = await sb()
+    .from('task')
+    .update(toRow({ status: 'open', completedAt: null, updatedAt: nowIso() }))
+    .eq('id', id);
+  if (error) throw error;
 }
 
 export async function updateTask(
@@ -102,11 +119,16 @@ export async function updateTask(
     >
   >
 ): Promise<void> {
-  await db.update(task).set(values).where(eq(task.id, id));
+  const { error } = await sb()
+    .from('task')
+    .update(toRow({ ...values, updatedAt: nowIso() }))
+    .eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  await db.delete(task).where(eq(task.id, id));
+  const { error } = await sb().from('task').delete().eq('id', id);
+  if (error) throw error;
 }
 
 function addDays(date: string, days: number): string {
