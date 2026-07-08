@@ -62,6 +62,16 @@ export async function listFavorites(): Promise<FoodProduct[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/** All cached products (for the full-data export). */
+export async function allProducts(): Promise<FoodProduct[]> {
+  return Object.values(await loadProducts());
+}
+
+/** Clears the local product cache (full-data wipe). */
+export async function clearProducts(): Promise<void> {
+  await saveLocal(PRODUCTS_KEY, {});
+}
+
 /** Most recently logged distinct products — quick re-add without scanning. */
 export async function recentProducts(limit = 8): Promise<FoodProduct[]> {
   const entries = await selectRows<FoodEntry>('food_entry', (q) =>

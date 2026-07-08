@@ -1,13 +1,8 @@
-import { and, asc, desc, eq, ne } from 'drizzle-orm';
-import { db, nowIso } from '../client';
 import { newId } from '../id';
-import { auditInsert } from '../audit';
+import { insertRow, insertRows, nowIso, sb, selectRows, toRow } from '../sb';
 import {
-  equipment,
-  exercise,
-  sessionTemplate,
-  setLog,
-  workoutSession,
+  type Equipment,
+  type Exercise,
   type SessionTemplate,
   type SetLog,
   type WorkoutSession,
@@ -17,23 +12,22 @@ import type { TrainingImportParsed } from '@/schemas/trainingImport';
 import { importExerciseLabel } from '@/domain/parseTrainingImport';
 
 export async function listSessionTemplates(): Promise<SessionTemplate[]> {
-  return db.select().from(sessionTemplate).orderBy(asc(sessionTemplate.id));
+  return selectRows<SessionTemplate>('session_template', (q) => q.order('id', { ascending: true }));
 }
 
 export async function seedSessionTemplates(seeds: SessionTemplateSeed[]): Promise<void> {
   const existing = await listSessionTemplates();
   if (existing.length > 0) return;
-  for (const seed of seeds) {
-    await db.insert(sessionTemplate).values({ ...seed, id: newId(), ...auditInsert() });
-  }
+  await insertRows(
+    'session_template',
+    seeds.map((seed) => ({ ...seed, id: newId(), updatedAt: nowIso() }))
+  );
 }
 
 export async function getActiveSession(): Promise<WorkoutSession | undefined> {
-  const rows = await db
-    .select()
-    .from(workoutSession)
-    .where(eq(workoutSession.status, 'active'))
-    .orderBy(desc(workoutSession.startedAt));
+  const rows = await selectRows<WorkoutSession>('workout_session', (q) =>
+    q.eq('status', 'active').order('started_at', { ascending: false }).limit(1)
+  );
   return rows[0];
 }
 
@@ -43,51 +37,49 @@ export async function startSession(values: {
   templateId?: string | null;
 }): Promise<string> {
   // only one active session at a time — abort stale ones
-  await db
-    .update(workoutSession)
-    .set({ status: 'aborted', endedAt: nowIso() })
-    .where(eq(workoutSession.status, 'active'));
+  const abort = await sb()
+    .from('workout_session')
+    .update(toRow({ status: 'aborted', endedAt: nowIso(), updatedAt: nowIso() }))
+    .eq('status', 'active');
+  if (abort.error) throw abort.error;
+
   const id = newId();
-  await db.insert(workoutSession).values({
+  await insertRow('workout_session', {
     id,
     title: values.title,
     blockId: values.blockId ?? null,
     templateId: values.templateId ?? null,
     startedAt: nowIso(),
     status: 'active',
-    ...auditInsert(),
+    updatedAt: nowIso(),
   });
   return id;
 }
 
 export async function finishSession(id: string, aborted = false): Promise<void> {
-  await db
-    .update(workoutSession)
-    .set({ status: aborted ? 'aborted' : 'done', endedAt: nowIso() })
-    .where(eq(workoutSession.id, id));
+  const { error } = await sb()
+    .from('workout_session')
+    .update(toRow({ status: aborted ? 'aborted' : 'done', endedAt: nowIso(), updatedAt: nowIso() }))
+    .eq('id', id);
+  if (error) throw error;
 }
 
 export async function getSession(id: string): Promise<WorkoutSession | undefined> {
-  const rows = await db.select().from(workoutSession).where(eq(workoutSession.id, id));
+  const rows = await selectRows<WorkoutSession>('workout_session', (q) => q.eq('id', id).limit(1));
   return rows[0];
 }
 
 export async function listSessions(limit = 30): Promise<WorkoutSession[]> {
-  return db
-    .select()
-    .from(workoutSession)
-    .where(ne(workoutSession.status, 'active'))
-    .orderBy(desc(workoutSession.startedAt))
-    .limit(limit);
+  return selectRows<WorkoutSession>('workout_session', (q) =>
+    q.neq('status', 'active').order('started_at', { ascending: false }).limit(limit)
+  );
 }
 
 /** All finished sessions, oldest first — statistics. */
 export async function listDoneSessions(): Promise<WorkoutSession[]> {
-  return db
-    .select()
-    .from(workoutSession)
-    .where(eq(workoutSession.status, 'done'))
-    .orderBy(asc(workoutSession.startedAt));
+  return selectRows<WorkoutSession>('workout_session', (q) =>
+    q.eq('status', 'done').order('started_at', { ascending: true })
+  );
 }
 
 export interface StatsSetRow {
@@ -102,44 +94,48 @@ export interface StatsSetRow {
 
 /** All set logs of finished sessions with the session date — statistics. */
 export async function listStatsSetRows(): Promise<StatsSetRow[]> {
-  const rows = await db
-    .select({
-      sessionId: setLog.sessionId,
-      exerciseId: setLog.exerciseId,
-      startedAt: workoutSession.startedAt,
-      reps: setLog.reps,
-      weightKg: setLog.weightKg,
-      done: setLog.done,
-    })
-    .from(setLog)
-    .innerJoin(workoutSession, eq(setLog.sessionId, workoutSession.id))
-    .where(eq(workoutSession.status, 'done'));
-  return rows.map(({ startedAt, ...rest }) => ({ ...rest, date: startedAt.slice(0, 10) }));
+  const sessions = await listDoneSessions();
+  if (sessions.length === 0) return [];
+  const dateBySession = new Map(sessions.map((s) => [s.id, s.startedAt.slice(0, 10)]));
+  const sets = await selectRows<SetLog>('set_log', (q) =>
+    q.in(
+      'session_id',
+      sessions.map((s) => s.id)
+    )
+  );
+  return sets
+    .filter((s) => dateBySession.has(s.sessionId))
+    .map((s) => ({
+      sessionId: s.sessionId,
+      exerciseId: s.exerciseId,
+      date: dateBySession.get(s.sessionId)!,
+      reps: s.reps,
+      weightKg: s.weightKg,
+      done: s.done,
+    }));
 }
 
 /** Distinct YYYY-MM-DD days with a finished session — training dashboard. */
 export async function trainingDayDates(): Promise<string[]> {
-  const rows = await db
-    .select({ startedAt: workoutSession.startedAt })
-    .from(workoutSession)
-    .where(eq(workoutSession.status, 'done'));
-  return [...new Set(rows.map((row) => row.startedAt.slice(0, 10)))];
+  const sessions = await listDoneSessions();
+  return [...new Set(sessions.map((s) => s.startedAt.slice(0, 10)))];
 }
 
 /** Set progress of a session: how many logged sets are checked off. */
 export async function sessionSetProgress(
   sessionId: string
 ): Promise<{ done: number; total: number }> {
-  const rows = await db.select().from(setLog).where(eq(setLog.sessionId, sessionId));
+  const rows = await selectRows<SetLog>('set_log', (q) => q.eq('session_id', sessionId));
   return { total: rows.length, done: rows.filter((r) => r.done).length };
 }
 
 export async function listSetLogs(sessionId: string): Promise<SetLog[]> {
-  return db
-    .select()
-    .from(setLog)
-    .where(eq(setLog.sessionId, sessionId))
-    .orderBy(asc(setLog.exerciseId), asc(setLog.setIndex));
+  return selectRows<SetLog>('set_log', (q) =>
+    q
+      .eq('session_id', sessionId)
+      .order('exercise_id', { ascending: true })
+      .order('set_index', { ascending: true })
+  );
 }
 
 export async function upsertSetLog(values: {
@@ -153,26 +149,35 @@ export async function upsertSetLog(values: {
   supersetGroup?: number | null;
 }): Promise<string> {
   if (values.id) {
-    await db
-      .update(setLog)
-      .set({
-        reps: values.reps,
-        weightKg: values.weightKg,
-        done: values.done,
-        supersetGroup: values.supersetGroup ?? null,
-      })
-      .where(eq(setLog.id, values.id));
+    const { error } = await sb()
+      .from('set_log')
+      .update(
+        toRow({
+          reps: values.reps,
+          weightKg: values.weightKg,
+          done: values.done,
+          supersetGroup: values.supersetGroup ?? null,
+          updatedAt: nowIso(),
+        })
+      )
+      .eq('id', values.id);
+    if (error) throw error;
     return values.id;
   }
   const id = newId();
-  await db
-    .insert(setLog)
-    .values({ ...values, id, supersetGroup: values.supersetGroup ?? null, createdAt: nowIso(), ...auditInsert() });
+  await insertRow('set_log', {
+    ...values,
+    id,
+    supersetGroup: values.supersetGroup ?? null,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  });
   return id;
 }
 
 export async function deleteSetLog(id: string): Promise<void> {
-  await db.delete(setLog).where(eq(setLog.id, id));
+  const { error } = await sb().from('set_log').delete().eq('id', id);
+  if (error) throw error;
 }
 
 /** Assigns (or clears) the superset group for every logged set of an exercise in a session. */
@@ -181,10 +186,12 @@ export async function setExerciseSupersetGroup(
   exerciseId: string,
   group: number | null
 ): Promise<void> {
-  await db
-    .update(setLog)
-    .set({ supersetGroup: group })
-    .where(and(eq(setLog.sessionId, sessionId), eq(setLog.exerciseId, exerciseId)));
+  const { error } = await sb()
+    .from('set_log')
+    .update(toRow({ supersetGroup: group, updatedAt: nowIso() }))
+    .eq('session_id', sessionId)
+    .eq('exercise_id', exerciseId);
+  if (error) throw error;
 }
 
 /**
@@ -195,26 +202,26 @@ export async function lastSetsForExercise(
   exerciseId: string,
   excludeSessionId?: string
 ): Promise<SetLog[]> {
-  const sessions = await db
-    .select({ id: workoutSession.id, startedAt: workoutSession.startedAt })
-    .from(workoutSession)
-    .innerJoin(setLog, eq(setLog.sessionId, workoutSession.id))
-    .where(and(eq(setLog.exerciseId, exerciseId), eq(workoutSession.status, 'done')))
-    .orderBy(desc(workoutSession.startedAt));
-  const lastSession = sessions.find((s) => s.id !== excludeSessionId);
+  const doneSessions = await listDoneSessions(); // ascending
+  const setsForExercise = await selectRows<SetLog>('set_log', (q) =>
+    q.eq('exercise_id', exerciseId)
+  );
+  const sessionIdsWithExercise = new Set(setsForExercise.map((s) => s.sessionId));
+  // newest first, first done session (≠ excluded) that contains this exercise
+  const lastSession = [...doneSessions]
+    .reverse()
+    .find((s) => s.id !== excludeSessionId && sessionIdsWithExercise.has(s.id));
   if (!lastSession) return [];
-  return db
-    .select()
-    .from(setLog)
-    .where(and(eq(setLog.sessionId, lastSession.id), eq(setLog.exerciseId, exerciseId)))
-    .orderBy(asc(setLog.setIndex));
+  return setsForExercise
+    .filter((s) => s.sessionId === lastSession.id)
+    .sort((a, b) => a.setIndex - b.setIndex);
 }
 
 /** Resolves template items to exercise ids by name (case-insensitive). */
 export async function resolveTemplateExercises(
   template: SessionTemplate
 ): Promise<{ exerciseId: string; targetSets: number; targetReps: number }[]> {
-  const exercises = await db.select().from(exercise);
+  const exercises = await selectRows<Exercise>('exercise');
   const byName = new Map(exercises.map((e) => [e.name.toLowerCase(), e.id]));
   const resolved: { exerciseId: string; targetSets: number; targetReps: number }[] = [];
   for (const item of template.items) {
@@ -239,28 +246,17 @@ export interface TrainingImportResult {
   createdExercises: string[];
 }
 
-/**
- * Match key for an import exercise: name alone when no equipment is given,
- * otherwise name + equipment (so "Beinbeuger (Kabel)" and "Beinbeuger
- * (Maschine)" stay distinct). Names carry no equipment; equipment lives in its
- * own field and its own table (exercise.equipmentId → equipment.name).
- */
-const NAME_EQUIP_SEP = ' ';
+const NAME_EQUIP_SEP = ' ';
 function matchKey(name: string, equipment?: string): string {
   const nameLower = name.trim().toLowerCase();
   const equipLower = equipment?.trim().toLowerCase();
   return equipLower ? `${nameLower}${NAME_EQUIP_SEP}${equipLower}` : nameLower;
 }
 
-/**
- * Existing (name, name+equipment) keys, so an import item can be matched either
- * by name alone (no equipment given → any variant counts as known) or by the
- * exact name+equipment pair.
- */
 async function existingExerciseKeys(): Promise<{ names: Set<string>; nameEquips: Set<string> }> {
   const [exercises, equipments] = await Promise.all([
-    db.select().from(exercise),
-    db.select().from(equipment),
+    selectRows<Exercise>('exercise'),
+    selectRows<Equipment>('equipment'),
   ]);
   const equipNameById = new Map(equipments.map((e) => [e.id, e.name.toLowerCase()]));
   const names = new Set(exercises.map((e) => e.name.toLowerCase()));
@@ -304,127 +300,126 @@ export async function unknownImportExercises(data: TrainingImportParsed): Promis
 /**
  * Imports validated sessions as finished workouts: creates missing exercises,
  * one `workout_session` (status done) per entry and all sets as done.
- * `startedAt` is stored as local-naive ISO (`YYYY-MM-DDTHH:mm:00`) so the
- * date-based statistics (`startedAt.slice(0, 10)`) hit the intended day.
+ * `startedAt` is stored as local-naive ISO so the date-based statistics
+ * (`startedAt.slice(0, 10)`) hit the intended day. No client transaction with
+ * PostgREST — inserted sequentially.
  */
 export async function importTrainingSessions(
   data: TrainingImportParsed
 ): Promise<TrainingImportResult> {
   const result: TrainingImportResult = { sessions: 0, sets: 0, createdExercises: [] };
 
-  await db.transaction(async (tx) => {
-    const [existing, existingEquipment] = await Promise.all([
-      tx.select().from(exercise),
-      tx.select().from(equipment),
-    ]);
+  const [existing, existingEquipment] = await Promise.all([
+    selectRows<Exercise>('exercise'),
+    selectRows<Equipment>('equipment'),
+  ]);
 
-    const equipIdByName = new Map(existingEquipment.map((e) => [e.name.toLowerCase(), e.id]));
-    const equipNameById = new Map(existingEquipment.map((e) => [e.id, e.name.toLowerCase()]));
+  const equipIdByName = new Map(existingEquipment.map((e) => [e.name.toLowerCase(), e.id]));
+  const equipNameById = new Map(existingEquipment.map((e) => [e.id, e.name.toLowerCase()]));
 
-    // name-only and name+equipment lookups (mirrors existingExerciseKeys)
-    const idByName = new Map<string, string>();
-    const idByNameEquip = new Map<string, string>();
-    for (const e of existing) {
-      const nameLower = e.name.toLowerCase();
-      if (!idByName.has(nameLower)) idByName.set(nameLower, e.id);
-      const equipName = e.equipmentId ? equipNameById.get(e.equipmentId) : undefined;
-      if (equipName) idByNameEquip.set(`${nameLower}${NAME_EQUIP_SEP}${equipName}`, e.id);
-    }
+  const idByName = new Map<string, string>();
+  const idByNameEquip = new Map<string, string>();
+  for (const e of existing) {
+    const nameLower = e.name.toLowerCase();
+    if (!idByName.has(nameLower)) idByName.set(nameLower, e.id);
+    const equipName = e.equipmentId ? equipNameById.get(e.equipmentId) : undefined;
+    if (equipName) idByNameEquip.set(`${nameLower}${NAME_EQUIP_SEP}${equipName}`, e.id);
+  }
 
-    const ensureEquipmentId = async (equipName: string | undefined): Promise<string | null> => {
-      if (!equipName) return null;
-      const lower = equipName.toLowerCase();
-      const known = equipIdByName.get(lower);
-      if (known !== undefined) return known;
-      const id = newId();
-      await tx.insert(equipment).values({ id, name: equipName, available: true, ...auditInsert() });
-      equipIdByName.set(lower, id);
-      equipNameById.set(id, lower);
-      return id;
-    };
+  const ensureEquipmentId = async (equipName: string | undefined): Promise<string | null> => {
+    if (!equipName) return null;
+    const lower = equipName.toLowerCase();
+    const known = equipIdByName.get(lower);
+    if (known !== undefined) return known;
+    const id = newId();
+    await insertRow('equipment', { id, name: equipName, available: true, updatedAt: nowIso() });
+    equipIdByName.set(lower, id);
+    equipNameById.set(id, lower);
+    return id;
+  };
 
-    const ensureExercise = async (
-      name: string,
-      equipName: string | undefined,
-      weighted: boolean
-    ): Promise<string> => {
-      const nameLower = name.toLowerCase();
-      const equipLower = equipName?.toLowerCase();
-      const known = equipLower
-        ? idByNameEquip.get(`${nameLower}${NAME_EQUIP_SEP}${equipLower}`)
-        : idByName.get(nameLower);
-      if (known !== undefined) return known;
+  const ensureExercise = async (
+    name: string,
+    equipName: string | undefined,
+    weighted: boolean
+  ): Promise<string> => {
+    const nameLower = name.toLowerCase();
+    const equipLower = equipName?.toLowerCase();
+    const known = equipLower
+      ? idByNameEquip.get(`${nameLower}${NAME_EQUIP_SEP}${equipLower}`)
+      : idByName.get(nameLower);
+    if (known !== undefined) return known;
 
-      const equipmentId = await ensureEquipmentId(equipName);
-      const id = newId();
-      await tx.insert(exercise).values({ id, name, equipmentId, isWeighted: weighted, ...auditInsert() });
-      if (!idByName.has(nameLower)) idByName.set(nameLower, id);
-      if (equipLower) idByNameEquip.set(`${nameLower}${NAME_EQUIP_SEP}${equipLower}`, id);
-      result.createdExercises.push(importExerciseLabel(name, equipName));
-      return id;
-    };
+    const equipmentId = await ensureEquipmentId(equipName);
+    const id = newId();
+    await insertRow('exercise', { id, name, equipmentId, isWeighted: weighted, updatedAt: nowIso() });
+    if (!idByName.has(nameLower)) idByName.set(nameLower, id);
+    if (equipLower) idByNameEquip.set(`${nameLower}${NAME_EQUIP_SEP}${equipLower}`, id);
+    result.createdExercises.push(importExerciseLabel(name, equipName));
+    return id;
+  };
 
-    for (const session of data.sessions) {
-      const start = session.start ?? '12:00';
-      const startedAt = `${session.date}T${start}:00`;
-      const endedAt =
-        session.durationMinutes !== undefined
-          ? localNaiveIso(new Date(Date.parse(startedAt) + session.durationMinutes * 60000))
-          : null;
-      const sessionId = newId();
-      await tx.insert(workoutSession).values({
-        id: sessionId,
-        title: session.title,
-        startedAt,
-        endedAt,
-        status: 'done',
-        ...auditInsert(),
-      });
-      result.sessions += 1;
+  for (const session of data.sessions) {
+    const start = session.start ?? '12:00';
+    const startedAt = `${session.date}T${start}:00`;
+    const endedAt =
+      session.durationMinutes !== undefined
+        ? localNaiveIso(new Date(Date.parse(startedAt) + session.durationMinutes * 60000))
+        : null;
+    const sessionId = newId();
+    await insertRow('workout_session', {
+      id: sessionId,
+      title: session.title,
+      startedAt,
+      endedAt,
+      status: 'done',
+      updatedAt: nowIso(),
+    });
+    result.sessions += 1;
 
-      for (const item of session.exercises) {
-        const name = item.name.trim();
-        const equipName = item.equipment?.trim() || undefined;
-        const weighted = item.sets.some((set) => (set.weightKg ?? 0) > 0);
-        const exerciseId = await ensureExercise(name, equipName, weighted);
+    const setRows: Record<string, unknown>[] = [];
+    for (const item of session.exercises) {
+      const name = item.name.trim();
+      const equipName = item.equipment?.trim() || undefined;
+      const weighted = item.sets.some((set) => (set.weightKg ?? 0) > 0);
+      const exerciseId = await ensureExercise(name, equipName, weighted);
 
-        // Cardio/mobility without countable sets: record a single placeholder set
-        // (null reps/weight) so the exercise still shows up in the session. Stats
-        // skip null-reps sets, so it never distorts volume/1RM.
-        if (item.sets.length === 0) {
-          await tx.insert(setLog).values({
-            id: newId(),
-            sessionId,
-            exerciseId,
-            setIndex: 1,
-            reps: null,
-            weightKg: null,
-            done: true,
-            supersetGroup: null,
-            createdAt: nowIso(),
-            ...auditInsert(),
-          });
-          continue;
-        }
-
-        for (const [index, set] of item.sets.entries()) {
-          await tx.insert(setLog).values({
-            id: newId(),
-            sessionId,
-            exerciseId,
-            setIndex: index + 1,
-            reps: set.reps ?? null,
-            weightKg: set.weightKg ?? null,
-            done: true,
-            supersetGroup: null,
-            createdAt: nowIso(),
-            ...auditInsert(),
-          });
-          result.sets += 1;
-        }
+      // Cardio/mobility without countable sets: one placeholder set (null
+      // reps/weight) so the exercise still shows; stats skip null-reps sets.
+      if (item.sets.length === 0) {
+        setRows.push({
+          id: newId(),
+          sessionId,
+          exerciseId,
+          setIndex: 1,
+          reps: null,
+          weightKg: null,
+          done: true,
+          supersetGroup: null,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        });
+        continue;
       }
+
+      item.sets.forEach((set, index) => {
+        setRows.push({
+          id: newId(),
+          sessionId,
+          exerciseId,
+          setIndex: index + 1,
+          reps: set.reps ?? null,
+          weightKg: set.weightKg ?? null,
+          done: true,
+          supersetGroup: null,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        });
+        result.sets += 1;
+      });
     }
-  });
+    await insertRows('set_log', setRows);
+  }
 
   return result;
 }
@@ -440,22 +435,16 @@ export interface StatsSetRowWithSessionIndex extends StatsSetRow {
  */
 export async function listStatsSetRowsWithSessionIndex(): Promise<StatsSetRowWithSessionIndex[]> {
   const sets = await listStatsSetRows();
-  const exercises = await db.select().from(exercise);
+  const exercises = await selectRows<Exercise>('exercise');
   const exerciseMap = new Map(exercises.map((e) => [e.id, e.name]));
 
-  // Group by exercise and date
   const byExercise = new Map<string, string[]>();
   for (const set of sets) {
-    if (!byExercise.has(set.exerciseId)) {
-      byExercise.set(set.exerciseId, []);
-    }
+    if (!byExercise.has(set.exerciseId)) byExercise.set(set.exerciseId, []);
     const dates = byExercise.get(set.exerciseId)!;
-    if (!dates.includes(set.date)) {
-      dates.push(set.date);
-    }
+    if (!dates.includes(set.date)) dates.push(set.date);
   }
 
-  // For each set, find its session index
   return sets.map((set) => {
     const sessionDates = byExercise.get(set.exerciseId) || [];
     const sessionIndex = sessionDates.indexOf(set.date) + 1;

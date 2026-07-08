@@ -1,10 +1,8 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import type { WeekImportParsed } from '@/schemas/week';
 import type { BlockStatus } from '@/domain/types';
-import { db, nowIso } from '../client';
 import { newId } from '../id';
-import { auditInsert } from '../audit';
-import { block, task, week, weekTemplate, type Block, type Week, type WeekTemplate } from '../schema';
+import { fromRow, insertRow, insertRows, nowIso, sb, selectRows, toRow } from '../sb';
+import { type Block, type Week, type WeekTemplate } from '../schema';
 
 export interface WeekWithBlocks {
   week: Week;
@@ -12,11 +10,14 @@ export interface WeekWithBlocks {
 }
 
 export async function getWeek(year: number, isoWeek: number): Promise<Week | undefined> {
-  const rows = await db
-    .select()
-    .from(week)
-    .where(and(eq(week.year, year), eq(week.isoWeek, isoWeek)));
-  return rows[0];
+  const { data, error } = await sb()
+    .from('week')
+    .select('*')
+    .eq('year', year)
+    .eq('iso_week', isoWeek)
+    .limit(1);
+  if (error) throw error;
+  return data && data[0] ? fromRow<Week>(data[0]) : undefined;
 }
 
 export async function getWeekWithBlocks(
@@ -25,115 +26,121 @@ export async function getWeekWithBlocks(
 ): Promise<WeekWithBlocks | undefined> {
   const found = await getWeek(year, isoWeek);
   if (!found) return undefined;
-  const blocks = await db
-    .select()
-    .from(block)
-    .where(eq(block.weekId, found.id))
-    .orderBy(asc(block.date), asc(block.start));
+  const blocks = await selectRows<Block>('block', (q) =>
+    q.eq('week_id', found.id).order('date', { ascending: true }).order('start', { ascending: true })
+  );
   return { week: found, blocks };
 }
 
 /** The most recent `limit` weeks with their blocks, newest first — statistics. */
 export async function listWeeksWithBlocks(limit = 12): Promise<WeekWithBlocks[]> {
-  const weeks = await db
-    .select()
-    .from(week)
-    .orderBy(desc(week.year), desc(week.isoWeek))
-    .limit(limit);
+  const weeks = await selectRows<Week>('week', (q) =>
+    q.order('year', { ascending: false }).order('iso_week', { ascending: false }).limit(limit)
+  );
   if (weeks.length === 0) return [];
-  const blocks = await db
-    .select()
-    .from(block)
-    .where(inArray(block.weekId, weeks.map((w) => w.id)))
-    .orderBy(asc(block.date), asc(block.start));
+  const blocks = await selectRows<Block>('block', (q) =>
+    q
+      .in(
+        'week_id',
+        weeks.map((w) => w.id)
+      )
+      .order('date', { ascending: true })
+      .order('start', { ascending: true })
+  );
   return weeks.map((w) => ({ week: w, blocks: blocks.filter((b) => b.weekId === w.id) }));
 }
 
 export async function getBlocksForDate(date: string): Promise<Block[]> {
-  return db.select().from(block).where(eq(block.date, date)).orderBy(asc(block.start));
+  return selectRows<Block>('block', (q) => q.eq('date', date).order('start', { ascending: true }));
 }
 
 /**
  * Applies a validated import: replaces the target week (blocks + week-bound
- * tasks) or creates it. Caller must have confirmed the replacement.
+ * tasks) or creates it. Caller must have confirmed the replacement. No client
+ * transaction with PostgREST — steps run sequentially.
  */
 export async function applyWeekImport(
   data: WeekImportParsed,
   source: 'imported' | 'template' = 'imported'
 ): Promise<string> {
-  return db.transaction(async (tx) => {
-    const existing = await tx
-      .select()
-      .from(week)
-      .where(and(eq(week.year, data.week.year), eq(week.isoWeek, data.week.isoWeek)));
+  const existing = await getWeek(data.week.year, data.week.isoWeek);
+  if (existing) {
+    // remove week-bound tasks + blocks, then the week itself
+    let res = await sb().from('task').delete().eq('week_id', existing.id);
+    if (res.error) throw res.error;
+    res = await sb().from('block').delete().eq('week_id', existing.id);
+    if (res.error) throw res.error;
+    res = await sb().from('week').delete().eq('id', existing.id);
+    if (res.error) throw res.error;
+  }
 
-    if (existing[0]) {
-      // blocks cascade via FK; week-bound tasks are replaced by the import
-      await tx.delete(task).where(eq(task.weekId, existing[0].id));
-      await tx.delete(week).where(eq(week.id, existing[0].id));
-    }
-
-    const weekId = newId();
-    await tx.insert(week).values({
-      id: weekId,
-      year: data.week.year,
-      isoWeek: data.week.isoWeek,
-      status: 'planned',
-      source,
-      createdAt: nowIso(),
-      ...auditInsert(),
-    });
-
-    for (const day of data.days) {
-      for (const b of day.blocks) {
-        await tx.insert(block).values({
-          id: newId(),
-          weekId,
-          date: day.date,
-          type: b.type,
-          start: b.start,
-          end: b.end,
-          title: b.title,
-          details: b.details ?? null,
-          status: 'planned',
-          ...auditInsert(),
-        });
-      }
-    }
-
-    for (const t of data.tasks ?? []) {
-      await tx.insert(task).values({
-        id: newId(),
-        title: t.title,
-        category: t.category,
-        estimatedMinutes: t.estimatedMinutes ?? null,
-        windowDay: t.preferredWindow?.day ?? null,
-        windowStart: t.preferredWindow?.start ?? null,
-        windowEnd: t.preferredWindow?.end ?? null,
-        context: t.context ?? null,
-        weekId,
-        createdAt: nowIso(),
-        ...auditInsert(),
-      });
-    }
-
-    return weekId;
+  const weekId = newId();
+  await insertRow('week', {
+    id: weekId,
+    year: data.week.year,
+    isoWeek: data.week.isoWeek,
+    status: 'planned',
+    source,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
   });
+
+  const blocks = data.days.flatMap((day) =>
+    day.blocks.map((b) => ({
+      id: newId(),
+      weekId,
+      date: day.date,
+      type: b.type,
+      start: b.start,
+      end: b.end,
+      title: b.title,
+      details: b.details ?? null,
+      status: 'planned',
+      updatedAt: nowIso(),
+    }))
+  );
+  await insertRows('block', blocks);
+
+  const tasks = (data.tasks ?? []).map((t) => ({
+    id: newId(),
+    title: t.title,
+    category: t.category,
+    estimatedMinutes: t.estimatedMinutes ?? null,
+    windowDay: t.preferredWindow?.day ?? null,
+    windowStart: t.preferredWindow?.start ?? null,
+    windowEnd: t.preferredWindow?.end ?? null,
+    context: t.context ?? null,
+    weekId,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  }));
+  await insertRows('task', tasks);
+
+  return weekId;
 }
 
 export async function setBlockStatus(blockId: string, status: BlockStatus): Promise<void> {
-  await db.update(block).set({ status }).where(eq(block.id, blockId));
+  const { error } = await sb()
+    .from('block')
+    .update(toRow({ status, updatedAt: nowIso() }))
+    .eq('id', blockId);
+  if (error) throw error;
 }
 
 export async function updateBlock(
   blockId: string,
   values: Partial<Pick<Block, 'start' | 'end' | 'title' | 'type' | 'date' | 'details'>>
 ): Promise<void> {
-  await db.update(block).set(values).where(eq(block.id, blockId));
+  const { error } = await sb()
+    .from('block')
+    .update(toRow({ ...values, updatedAt: nowIso() }))
+    .eq('id', blockId);
+  if (error) throw error;
 }
 
 export async function deleteBlock(blockId: string): Promise<void> {
-  await db.delete(block).where(eq(block.id, blockId));
+  const { error } = await sb().from('block').delete().eq('id', blockId);
+  if (error) throw error;
 }
 
 // --- Week templates -------------------------------------------------------
@@ -152,7 +159,6 @@ export async function saveWeekAsTemplate(name: string, source: WeekWithBlocks): 
   const days = [...byDate.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, blocks]) => ({
-      // store ISO weekday (1–7) instead of a concrete date
       weekday: isoWeekdayOf(date),
       blocks: blocks.map((b) => ({
         type: b.type,
@@ -162,9 +168,13 @@ export async function saveWeekAsTemplate(name: string, source: WeekWithBlocks): 
         details: b.details ?? undefined,
       })),
     }));
-  await db
-    .insert(weekTemplate)
-    .values({ id: newId(), name, data: { days }, createdAt: nowIso(), ...auditInsert() });
+  await insertRow('week_template', {
+    id: newId(),
+    name,
+    data: { days },
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  });
 }
 
 function isoWeekdayOf(date: string): number {
@@ -173,11 +183,12 @@ function isoWeekdayOf(date: string): number {
 }
 
 export async function listWeekTemplates(): Promise<WeekTemplate[]> {
-  return db.select().from(weekTemplate).orderBy(asc(weekTemplate.name));
+  return selectRows<WeekTemplate>('week_template', (q) => q.order('name', { ascending: true }));
 }
 
 export async function deleteWeekTemplate(id: string): Promise<void> {
-  await db.delete(weekTemplate).where(eq(weekTemplate.id, id));
+  const { error } = await sb().from('week_template').delete().eq('id', id);
+  if (error) throw error;
 }
 
 interface TemplateDay {

@@ -1,30 +1,29 @@
 /**
- * Full-data export (JSON dump) and complete wipe — Settings §6.6.
+ * Full-data export (JSON dump) and complete/selective wipe — Settings §6.6.
  * Also collects the raw rows for the range-based analysis export (shaped in
- * domain/analysisExport.ts). Data never leaves the device unless the user
- * explicitly exports.
+ * domain/analysisExport.ts). Synced data lives in Supabase (RLS-scoped to the
+ * signed-in user); food_product + coach_dismissal are device-local.
  */
-import { and, asc, count, eq, gte, inArray, lt, lte, ne, or } from 'drizzle-orm';
-import { db } from '../client';
-import {
-  block,
-  bodyMeasurement,
-  coachDismissal,
-  equipment,
-  exercise,
-  foodEntry,
-  foodProduct,
-  notificationPref,
-  profile,
-  sessionTemplate,
-  setLog,
-  task,
-  week,
-  weekTemplate,
-  weeklyStructure,
-  workoutSession,
+import { deleteAllRows, nowIso, sb, selectRows } from '../sb';
+import type {
+  Block,
+  BodyMeasurement,
+  Equipment,
+  Exercise,
+  FoodEntry,
+  NotificationPref,
+  Profile,
+  SessionTemplate,
+  SetLog,
+  Task,
+  Week,
+  WeekTemplate,
+  WeeklyStructureRow,
+  WorkoutSession,
 } from '../schema';
 import { addDaysIso } from '@/domain/time';
+import { allProducts, clearProducts } from './foodRepo';
+import { clearDismissals, listDismissals } from './coachDismissalRepo';
 import type {
   ExportBlock,
   ExportFoodEntry,
@@ -32,29 +31,63 @@ import type {
   ExportSession,
   ExportTask,
 } from '@/domain/analysisExport';
-import type { Profile } from '../schema';
 
 export async function exportAllData(): Promise<string> {
+  const [
+    profile,
+    weeklyStructure,
+    equipment,
+    exercise,
+    week,
+    block,
+    task,
+    workoutSession,
+    setLog,
+    sessionTemplate,
+    weekTemplate,
+    notificationPref,
+    foodEntry,
+    bodyMeasurement,
+    foodProduct,
+    coachDismissal,
+  ] = await Promise.all([
+    selectRows<Profile>('profile'),
+    selectRows<WeeklyStructureRow>('weekly_structure'),
+    selectRows<Equipment>('equipment'),
+    selectRows<Exercise>('exercise'),
+    selectRows<Week>('week'),
+    selectRows<Block>('block'),
+    selectRows<Task>('task'),
+    selectRows<WorkoutSession>('workout_session'),
+    selectRows<SetLog>('set_log'),
+    selectRows<SessionTemplate>('session_template'),
+    selectRows<WeekTemplate>('week_template'),
+    selectRows<NotificationPref>('notification_pref'),
+    selectRows<FoodEntry>('food_entry'),
+    selectRows<BodyMeasurement>('body_measurement'),
+    allProducts(),
+    listDismissals(),
+  ]);
   const dump = {
     exportedAt: new Date().toISOString(),
     app: 'weeko',
     version: 1,
     data: {
-      profile: await db.select().from(profile),
-      weeklyStructure: await db.select().from(weeklyStructure),
-      equipment: await db.select().from(equipment),
-      exercise: await db.select().from(exercise),
-      week: await db.select().from(week),
-      block: await db.select().from(block),
-      task: await db.select().from(task),
-      workoutSession: await db.select().from(workoutSession),
-      setLog: await db.select().from(setLog),
-      sessionTemplate: await db.select().from(sessionTemplate),
-      weekTemplate: await db.select().from(weekTemplate),
-      notificationPref: await db.select().from(notificationPref),
-      foodProduct: await db.select().from(foodProduct),
-      foodEntry: await db.select().from(foodEntry),
-      coachDismissal: await db.select().from(coachDismissal),
+      profile,
+      weeklyStructure,
+      equipment,
+      exercise,
+      week,
+      block,
+      task,
+      workoutSession,
+      setLog,
+      sessionTemplate,
+      weekTemplate,
+      notificationPref,
+      foodProduct,
+      foodEntry,
+      coachDismissal,
     },
   };
   return JSON.stringify(dump, null, 2);
@@ -77,52 +110,37 @@ export interface AnalysisRangeData {
 export async function collectAnalysisRange(start: string, end: string): Promise<AnalysisRangeData> {
   const nextDay = addDaysIso(end, 1);
 
-  const profileRows = await db.select().from(profile);
+  const profileRows = await selectRows<Profile>('profile');
 
-  const blockRows = await db
-    .select()
-    .from(block)
-    .where(and(gte(block.date, start), lte(block.date, end)))
-    .orderBy(asc(block.date), asc(block.start));
+  const blockRows = await selectRows<Block>('block', (q) =>
+    q.gte('date', start).lte('date', end).order('date', { ascending: true }).order('start', { ascending: true })
+  );
 
-  // tasks completed in range, plus everything still open (context for the AI)
-  const taskRows = await db
-    .select()
-    .from(task)
-    .where(
-      or(
-        eq(task.status, 'open'),
-        and(gte(task.completedAt, start), lt(task.completedAt, nextDay))
-      )
-    );
+  // tasks still open, plus tasks completed in range (context for the AI)
+  const taskRows = await selectRows<Task>('task', (q) =>
+    q.or(`status.eq.open,and(completed_at.gte.${start},completed_at.lt.${nextDay})`)
+  );
 
-  const sessionRows = await db
-    .select()
-    .from(workoutSession)
-    .where(
-      and(
-        ne(workoutSession.status, 'active'),
-        gte(workoutSession.startedAt, start),
-        lt(workoutSession.startedAt, nextDay)
-      )
-    )
-    .orderBy(asc(workoutSession.startedAt));
+  const sessionRows = await selectRows<WorkoutSession>('workout_session', (q) =>
+    q
+      .neq('status', 'active')
+      .gte('started_at', start)
+      .lt('started_at', nextDay)
+      .order('started_at', { ascending: true })
+  );
 
   const sessionIds = sessionRows.map((s) => s.id);
   const setRows = sessionIds.length
-    ? await db
-        .select()
-        .from(setLog)
+    ? await selectRows<SetLog>('set_log', (q) =>
         // insertion order ≈ performed order (keeps exercise sequence intact)
-        .where(inArray(setLog.sessionId, sessionIds))
-        .orderBy(asc(setLog.sessionId), asc(setLog.id))
+        q.in('session_id', sessionIds).order('session_id', { ascending: true }).order('id', { ascending: true })
+      )
     : [];
-  const exerciseRows = await db.select().from(exercise);
+  const exerciseRows = await selectRows<Exercise>('exercise');
   const exerciseName = new Map(exerciseRows.map((e) => [e.id, e.name]));
 
   const sessions: ExportSession[] = sessionRows.map((session) => {
     const ownSets = setRows.filter((s) => s.sessionId === session.id && s.done);
-    // group sets by exercise, keeping first-seen order
     const byExercise = new Map<string, typeof ownSets>();
     for (const set of ownSets) {
       const list = byExercise.get(set.exerciseId) ?? [];
@@ -143,17 +161,13 @@ export async function collectAnalysisRange(start: string, end: string): Promise<
     };
   });
 
-  const foodRows = await db
-    .select()
-    .from(foodEntry)
-    .where(and(gte(foodEntry.date, start), lte(foodEntry.date, end)))
-    .orderBy(asc(foodEntry.date), asc(foodEntry.createdAt));
+  const foodRows = await selectRows<FoodEntry>('food_entry', (q) =>
+    q.gte('date', start).lte('date', end).order('date', { ascending: true }).order('created_at', { ascending: true })
+  );
 
-  const measurementRows = await db
-    .select()
-    .from(bodyMeasurement)
-    .where(and(gte(bodyMeasurement.date, start), lte(bodyMeasurement.date, end)))
-    .orderBy(asc(bodyMeasurement.date));
+  const measurementRows = await selectRows<BodyMeasurement>('body_measurement', (q) =>
+    q.gte('date', start).lte('date', end).order('date', { ascending: true })
+  );
 
   return {
     profile: profileRows[0] ?? null,
@@ -199,72 +213,70 @@ export interface DataCounts {
   tasks: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function rowCount(table: any): Promise<number> {
-  const rows = await db.select({ n: count() }).from(table);
-  return Number(rows[0]?.n ?? 0);
+async function rowCount(table: string): Promise<number> {
+  const { count, error } = await sb().from(table).select('*', { count: 'exact', head: true });
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export async function dataCounts(): Promise<DataCounts> {
   const [body, sessions, food, weeks, tasks] = await Promise.all([
-    rowCount(bodyMeasurement),
-    rowCount(workoutSession),
-    rowCount(foodEntry),
-    rowCount(week),
-    rowCount(task),
+    rowCount('body_measurement'),
+    rowCount('workout_session'),
+    rowCount('food_entry'),
+    rowCount('week'),
+    rowCount('task'),
   ]);
   return { body, training: sessions, food, plan: weeks, tasks };
 }
 
 /** Delete only body-composition measurements (weight/fat/muscle/…). */
 export async function deleteBodyMeasurements(): Promise<void> {
-  await db.delete(bodyMeasurement);
+  await deleteAllRows('body_measurement');
 }
 
 /** Delete logged training: sets first (FK), then sessions. Keeps the exercise catalog. */
 export async function deleteTrainingLogs(): Promise<void> {
-  await db.transaction(async (tx) => {
-    await tx.delete(setLog);
-    await tx.delete(workoutSession);
-  });
+  await deleteAllRows('set_log');
+  await deleteAllRows('workout_session');
 }
 
 /** Delete nutrition diary entries. Keeps the cached/custom product list. */
 export async function deleteFoodEntries(): Promise<void> {
-  await db.delete(foodEntry);
+  await deleteAllRows('food_entry');
 }
 
 /** Delete the week plan: blocks first (belong to weeks), then weeks. Keeps templates. */
 export async function deletePlanData(): Promise<void> {
-  await db.transaction(async (tx) => {
-    await tx.delete(block);
-    await tx.delete(week);
-  });
+  await deleteAllRows('block');
+  await deleteAllRows('week');
 }
 
 /** Delete standalone tasks. */
 export async function deleteTasks(): Promise<void> {
-  await db.delete(task);
+  await deleteAllRows('task');
 }
 
 /** Deletes ALL user data (irreversible). Caller must confirm with the user. */
 export async function deleteAllData(): Promise<void> {
-  await db.transaction(async (tx) => {
-    await tx.delete(bodyMeasurement);
-    await tx.delete(coachDismissal);
-    await tx.delete(foodEntry);
-    await tx.delete(foodProduct);
-    await tx.delete(setLog);
-    await tx.delete(workoutSession);
-    await tx.delete(task);
-    await tx.delete(block);
-    await tx.delete(week);
-    await tx.delete(weekTemplate);
-    await tx.delete(sessionTemplate);
-    await tx.delete(exercise);
-    await tx.delete(equipment);
-    await tx.delete(weeklyStructure);
-    await tx.delete(notificationPref);
-    await tx.delete(profile);
-  });
+  // children before parents (FK order)
+  await deleteAllRows('body_measurement');
+  await deleteAllRows('food_entry');
+  await deleteAllRows('set_log');
+  await deleteAllRows('workout_session');
+  await deleteAllRows('task');
+  await deleteAllRows('block');
+  await deleteAllRows('week');
+  await deleteAllRows('week_template');
+  await deleteAllRows('session_template');
+  await deleteAllRows('exercise');
+  await deleteAllRows('equipment');
+  await deleteAllRows('weekly_structure');
+  await deleteAllRows('notification_pref');
+  await deleteAllRows('profile');
+  await clearProducts();
+  await clearDismissals();
 }
+
+// `nowIso` re-exported for callers that imported it from here historically.
+export { nowIso };

@@ -38,3 +38,8 @@ export async function pruneDismissals(olderThanIso: string): Promise<void> {
     rows.filter((r) => r.createdAt >= olderThanIso)
   );
 }
+
+/** Clears all dismissals (full-data wipe). */
+export async function clearDismissals(): Promise<void> {
+  await saveLocal(KEY, []);
+}
