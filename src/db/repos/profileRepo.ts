@@ -1,13 +1,12 @@
-import { eq } from 'drizzle-orm';
-import { db, nowIso } from '../client';
 import { newId } from '../id';
-import { currentUserId } from '../audit';
-import { profile, type Profile } from '../schema';
+import { fromRow, nowIso, sb, toRow } from '../sb';
+import type { Profile } from '../schema';
 
-/** Profile is a per-user singleton — read the one row, keyed by its text id. */
+/** Profile is a per-user singleton — RLS scopes it to the signed-in user. */
 export async function getProfile(): Promise<Profile | undefined> {
-  const rows = await db.select().from(profile).limit(1);
-  return rows[0];
+  const { data, error } = await sb().from('profile').select('*').limit(1);
+  if (error) throw error;
+  return data && data[0] ? fromRow<Profile>(data[0]) : undefined;
 }
 
 export async function upsertProfile(
@@ -15,14 +14,16 @@ export async function upsertProfile(
 ): Promise<Profile> {
   const existing = await getProfile();
   if (existing) {
-    await db
-      .update(profile)
-      .set({ ...values, updatedAt: nowIso() })
-      .where(eq(profile.id, existing.id));
+    const { error } = await sb()
+      .from('profile')
+      .update(toRow({ ...values, updatedAt: nowIso() }))
+      .eq('id', existing.id);
+    if (error) throw error;
   } else {
-    await db
-      .insert(profile)
-      .values({ id: newId(), userId: currentUserId(), ...values, updatedAt: nowIso() });
+    const { error } = await sb()
+      .from('profile')
+      .insert(toRow({ id: newId(), ...values, updatedAt: nowIso() }));
+    if (error) throw error;
   }
   return (await getProfile())!;
 }
