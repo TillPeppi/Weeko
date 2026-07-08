@@ -42,3 +42,13 @@ alter table public.session_template  alter column items set default '[]'::jsonb;
 alter table public.week_template     alter column data type jsonb using (nullif(data, '')::jsonb);
 
 alter table public.food_entry        alter column nutrients type jsonb using (nullif(nutrients, '')::jsonb);
+
+-- ---------------------------------------------------------------------------
+-- API-Rollen brauchen Tabellen-Rechte (sonst "permission denied for table ...").
+-- RLS bleibt der eigentliche Schutz: anon sieht/ändert keine Zeilen (kein
+-- auth.uid()), authenticated nur die eigenen (user_id = auth.uid()).
+-- ---------------------------------------------------------------------------
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public to anon, authenticated;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated;

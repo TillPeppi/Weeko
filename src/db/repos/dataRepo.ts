@@ -4,7 +4,7 @@
  * domain/analysisExport.ts). Synced data lives in Supabase (RLS-scoped to the
  * signed-in user); food_product + coach_dismissal are device-local.
  */
-import { deleteAllRows, nowIso, sb, selectRows } from '../sb';
+import { deleteAllRows, sb, selectRows } from '../sb';
 import type {
   Block,
   BodyMeasurement,
@@ -277,6 +277,3 @@ export async function deleteAllData(): Promise<void> {
   await clearProducts();
   await clearDismissals();
 }
-
-// `nowIso` re-exported for callers that imported it from here historically.
-export { nowIso };

@@ -6,8 +6,6 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { initDb } from '@/db/client';
-import { connectSync, disconnectSync, isPowerSyncConfigured } from '@/db/powersync/system';
 import { bootstrapDefaults } from '@/db/bootstrap';
 import { SplashPulse } from '@/components/SplashPulse';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -27,6 +25,7 @@ export default function RootLayout() {
   const session = useAuthStore((s) => s.session);
   const authHydrated = useAuthStore((s) => s.hydrated);
   const [ready, setReady] = useState(false);
+  const [accountReady, setAccountReady] = useState(false);
   const [initError, setInitError] = useState<Error | null>(null);
   const segments = useSegments();
   const router = useRouter();
@@ -35,15 +34,13 @@ export default function RootLayout() {
     void SplashScreen.hideAsync();
   }, []);
 
+  // Startup: no local DB to open anymore (data lives in Supabase). Just hydrate
+  // auth + settings so the auth gate + theme are correct on the login screen.
   useEffect(() => {
     void (async () => {
       try {
-        // PowerSync creates the local schema itself — no Drizzle migrate() here.
-        await initDb();
-        await bootstrapDefaults();
-        await useSettingsStore.getState().hydrate();
-        await useTrainingStore.getState().hydrate();
         await useAuthStore.getState().hydrate();
+        await useSettingsStore.getState().hydrate();
         setReady(true);
       } catch (error) {
         setInitError(error as Error);
@@ -51,12 +48,30 @@ export default function RootLayout() {
     })();
   }, []);
 
-  // Sync lifecycle: connect PowerSync while signed in, disconnect on sign-out.
-  // No-op until a PowerSync instance URL is configured.
+  // Per-account setup runs once a session exists: seed this account's defaults
+  // (idempotent, RLS-scoped) then re-hydrate the account-scoped stores so
+  // onboardingDone/theme/templates reflect the cloud data.
   useEffect(() => {
-    if (!ready || !isPowerSyncConfigured) return;
-    if (session) connectSync().catch((e) => console.error('[sync] connectSync error:', e));
-    else void disconnectSync();
+    if (!ready) return;
+    if (!session) {
+      setAccountReady(false);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        await bootstrapDefaults();
+        await useSettingsStore.getState().hydrate();
+        await useTrainingStore.getState().hydrate();
+      } catch (error) {
+        console.error('[bootstrap] account setup failed:', error);
+      } finally {
+        if (!cancelled) setAccountReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [ready, session]);
 
   // Auth gate: only active once a Supabase project is configured. Signed-out
@@ -78,7 +93,9 @@ export default function RootLayout() {
     );
   }
 
-  if (!ready || !hydrated) {
+  // While signed in, hold the splash until the account is set up + re-hydrated,
+  // so returning users never flash the onboarding gate before onboardingDone loads.
+  if (!ready || !hydrated || (session && !accountReady)) {
     return <SplashPulse onLayout={hideNativeSplash} />;
   }
 

@@ -52,8 +52,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   onboardingDone: false,
 
   hydrate: async () => {
-    const profile = await getProfile();
-    const language = (profile?.language ?? 'de') as AppLanguage;
+    // Signed-out (or a transient Supabase error) must not block startup: fall
+    // back to defaults so the login screen renders. Re-runs after login with a
+    // session, when the real profile loads.
+    let profile: Awaited<ReturnType<typeof getProfile>>;
+    try {
+      profile = await getProfile();
+    } catch {
+      profile = undefined;
+    }
+    const language = (profile?.language ?? get().language) as AppLanguage;
     const theme = (profile?.theme ?? 'light') as ThemeSetting;
     if (profile) {
       setAppLanguage(language);

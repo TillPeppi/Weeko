@@ -69,8 +69,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "powersync-web copy-assets && expo start --web --port 8090",
-    "build:web": "powersync-web copy-assets && expo export --platform web",
+    "web": "expo start --web --port 8090",
+    "build:web": "expo export --platform web",
     "deploy:web": "npm run build:web && eas deploy",
     "lint": "expo lint",
     "test": "vitest run",
@@ -78,8 +78,7 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "schema:docs": "tsx scripts/generate-week-schema.ts",
-    "powersync:assets": "powersync-web copy-assets",
-    "postinstall": "patch-package && powersync-web copy-assets"
+    "postinstall": "patch-package"
   },
   "private": true
 }
