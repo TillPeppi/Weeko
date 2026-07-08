@@ -175,7 +175,9 @@ export function TrendChart({
   emptyColor: string;
   color: string;
 }) {
-  if (type === 'line') return <LineChart bars={bars} color={color} />;
+  // A line needs ≥2 points; with a single aggregated point (e.g. all data in one
+  // week/month) fall back to a bar so something is always shown.
+  if (type === 'line' && bars.length >= 2) return <LineChart bars={bars} color={color} />;
   return <BarChart bars={bars} emptyColor={emptyColor} />;
 }
 

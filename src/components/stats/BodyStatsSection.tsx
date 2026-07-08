@@ -115,15 +115,9 @@ export function BodyStatsSection({
                 ) : null}
               </View>
             </View>
-            {/* Always show a chart when there's data. A single point can't form a
-                line, so fall back to a bar until there are ≥2 points. */}
+            {/* TrendChart falls back to a bar when a line isn't possible (<2 points). */}
             <View className="mt-3">
-              <TrendChart
-                type={buckets.length >= 2 ? mode.type : 'bar'}
-                bars={bars}
-                emptyColor={emptyColor}
-                color={color}
-              />
+              <TrendChart type={mode.type} bars={bars} emptyColor={emptyColor} color={color} />
             </View>
           </Card>
         );
