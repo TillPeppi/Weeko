@@ -115,13 +115,16 @@ export function BodyStatsSection({
                 ) : null}
               </View>
             </View>
-            {buckets.length > 1 ? (
-              <View className="mt-3">
-                <TrendChart type={mode.type} bars={bars} emptyColor={emptyColor} color={color} />
-              </View>
-            ) : (
-              <Muted className="mt-2 text-xs">{t('stats.body.needMore')}</Muted>
-            )}
+            {/* Always show a chart when there's data. A single point can't form a
+                line, so fall back to a bar until there are ≥2 points. */}
+            <View className="mt-3">
+              <TrendChart
+                type={buckets.length >= 2 ? mode.type : 'bar'}
+                bars={bars}
+                emptyColor={emptyColor}
+                color={color}
+              />
+            </View>
           </Card>
         );
       })}
